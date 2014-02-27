@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+        <title>Marcus</title>
+        <link rel="stylesheet" media="all" href="style.css" />
+        <script src="proverbs.js"></script>
+    </head>
+    <body>
+        <div id="container">
+            <h1>Marcus</h1>
+            <button onclick="generateProverb()">proverb</button>
+            <div id="console"></div>
+        </div>
+        <script>
+            var terminals = {};
+            var startwords = [];
+            var wordstats = {};
+
+            function markov() { 
+                for(var i = 0; i < proverbs.length; i++) { 
+                    var words = proverbs[i].replace(',','').replace(';','').split(' ');
+                    terminals[words[words.length - 1]] = true;
+                    startwords.push(words[0]);
+                    for(var j = 0; j < words.length - 1; j++) { 
+                        var thisWord = words[j];
+                        var nextWord = words[j+1];
+                        if(nextWord !== undefined) { 
+                        if(wordstats.hasOwnProperty(thisWord))
+                                wordstats[thisWord].push(nextWord);
+                            else
+                                wordstats[thisWord] = [nextWord];
+                        }
+                    }
+                }
+            };
+
+            function makeSentence() { 
+                var length = 5;
+                word = randomWordFrom(startwords);
+                var sentence = [ word ];
+                while(wordstats.hasOwnProperty(word)) { 
+                    var nextWordOptions = wordstats[word];
+                    //print(nextWordOptions);
+                    word = randomWordFrom(nextWordOptions);
+                    sentence.push(word);
+                    if(sentence.length > length && terminals.hasOwnProperty(word))
+                        break;
+                }
+                if(sentence.length < length)
+                    return makeSentence(length);
+                return sentence.join(' ');
+            };
+
+            function randomWordFrom(wordList) { 
+                var randomPosition = Math.floor(wordList.length * Math.random());
+                return wordList[randomPosition];
+            };
+
+            markov();                           // makes the links
+
+            function generateProverb() {
+                var p = document.createElement("P");
+                var sentence = document.createTextNode(makeSentence());
+                p.appendChild(sentence);
+                document.getElementById("console").appendChild(p);
+            }
+
+        </script>
+    </body>
+</html>
