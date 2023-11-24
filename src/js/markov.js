@@ -2,12 +2,12 @@
 function Markov(corpus) { 
 
     this.corpus = corpus;
-    // console.log(this.corpus);
 
     this.chain = {};
     this.startWords = {};
     this.endWords = {};
 
+    this.ngramSize = 1;
     this.minWordsInSentence = 8;
     this.minSentences = 5;
 
@@ -28,7 +28,8 @@ function Markov(corpus) {
 
     this.buildChain = function() { 
 
-        const lines = this.corpus.split('\n');
+        // split corpus on newline or end of sentence ('.')
+        const lines = this.corpus.split(/(?<=\.)|\r?\n/);
 
         for(let i=0; i<lines.length; i++) { 
 
@@ -38,7 +39,7 @@ function Markov(corpus) {
                 continue;
             }
 
-            const words = line.split(/\s+/);
+            const words = line.trim().split(/\s+/);
 
             if(words.length === 0) { 
                 continue;
@@ -58,20 +59,17 @@ function Markov(corpus) {
             for(let j=0; j<words.length; j++) { 
 
                 const thisWord = words[j];
-                const nextWord = words[j+1];
 
-                if(nextWord !== undefined) { 
-                    this.addWordToChain(thisWord, nextWord);
+                const nextWordOrWords = words.slice(j+1, j+1+this.ngramSize).join(' ');
+
+                if(nextWordOrWords !== undefined) { 
+                    this.addWordToChain(thisWord, nextWordOrWords);
                 }
 
             }
-        }
-    };
+        };
 
-    this.buildChain();
-    // console.log(this.startWords);
-    // console.log(this.endWords);
-    console.log(this.chain);
+    };
 
     /**
      * Pick a random element from an array or object
@@ -93,6 +91,10 @@ function Markov(corpus) {
         return options[randomPosition];
     };
 
+    this.setNgrams = function(n) { 
+        this.ngramSize = n;
+    };
+
     this.setMinWords = function(n) { 
         this.minWordsInSentence = n;
     };
@@ -111,9 +113,11 @@ function Markov(corpus) {
 
         for(let i=0; i<this.minSentences; i++) { 
             let s = this.sentence();
-            s = s.charAt(0).toUpperCase() + s.slice(1);
-            paragraph += s;
-            paragraph += ". ";
+            if(s!=="") { 
+                s = s.charAt(0).toUpperCase() + s.slice(1);
+                paragraph += s.trim();
+                paragraph += ". ";
+            };
         };
 
         return paragraph;
@@ -131,9 +135,21 @@ function Markov(corpus) {
         const sentence = [word];
 
         while(this.chain.hasOwnProperty(word)) { 
+
             const nextWordOptions = this.chain[word];
-            word = randomWordFromList(nextWordOptions);
-            sentence.push(word);
+
+            const wordOrWords = randomWordFromList(nextWordOptions);
+
+            const wordOrWordsList = wordOrWords.split(' ');
+
+            for(let w=0; w<wordOrWordsList.length; w++) { 
+                sentence.push(wordOrWordsList[w]);
+            };
+
+            const lastWordinSegment = wordOrWordsList[wordOrWordsList.length - 1];
+
+            word = lastWordinSegment;
+
             if(sentence.length > this.minWordsInSentence && this.endWords.hasOwnProperty(word)) { 
                 break;
             }

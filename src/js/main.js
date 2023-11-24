@@ -19,8 +19,10 @@ $(function() {
 
 	const marcus = new Markov(txt);
 
+	marcus.setNgrams(4);
 	marcus.setMinWords(10);
 	marcus.setMinSentences(5);
+	marcus.buildChain();
 
 	$("#generate").on("click", function() { 
 		const text = marcus.generate();
