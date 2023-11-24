@@ -7,10 +7,11 @@ import "../css/style.css";
 
 import * as dom from "./dom";
 
-import txt from "../txt/grimm.txt";
+// import txt from "../txt/grimm.txt";
 // import txt from "../txt/proverbs.txt";
 // import txt from "../txt/tiny-shakespeare.txt";
-// import txt from "../txt/trump.txt";
+
+import txt from "../txt/trump.txt";
 
 import {Markov} from "./Markov";
 
