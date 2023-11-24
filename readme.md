@@ -3,6 +3,8 @@
 
 Simple example of markov chain generation
 
+See here: https://julianbrowne.github.io/marcus/test/
+
 ## TLDR
 
 Open `test\index.html` in a browser and click the "generate" button
