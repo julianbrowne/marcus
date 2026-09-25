@@ -1,7 +1,7 @@
 
 # Marcus
 
-Simple example of markov chain generation
+A Markov Chain explorer.
 
 An order-n Markov chain: each next word is sampled from what followed the last *n* words (the "context words" setting, 1-10) in the source text. Small *n* gives novel but rambling text; large *n* gives fluent text that is increasingly copied verbatim from the source (on Pride and Prejudice, ~0% of sentences at n=2, ~70% at n=4, ~98% at n=6), a small-scale version of an LLM's context window and memorisation.
 
@@ -16,7 +16,7 @@ npm test        # run tests
 npm run build   # static build in dist/
 ```
 
-## Source Material 
+## Source Material
 
 Found in `src/corpus` and picked at runtime. Drop any `.txt` file in there to add your own.
 
