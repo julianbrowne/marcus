@@ -1,8 +1,8 @@
 import {useState} from 'react';
-import {Markov} from './markov';
+import {Markov, MAX_ORDER} from './markov';
 import Modal from './Modal';
 import WordMap from './WordMap';
-import ChainTable, {summarise} from './ChainTable';
+import ChainTable from './ChainTable';
 import ViewMenu from './ViewMenu';
 import {clean} from './textprep';
 import {embed} from './embed';
@@ -33,9 +33,9 @@ const BUSY = {
 // wait until the browser has painted, so the spinner shows before the main thread blocks
 const nextPaint = () => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve)));
 
-function buildMarkov(txt, ngrams) {
+function buildMarkov(txt, order) {
   const marcus = new Markov(txt);
-  marcus.setNgrams(ngrams);
+  marcus.setOrder(order);
   marcus.setMinWords(10);
   marcus.setMinSentences(5);
   marcus.buildChain();
@@ -44,15 +44,15 @@ function buildMarkov(txt, ngrams) {
 
 export default function App() {
   const [corpus, setCorpus] = useState('./corpus/trump.txt');
-  const [ngrams, setNgrams] = useState('4');
+  const [order, setOrder] = useState('2'); // context words
   const [marcus, setMarcus] = useState(null);
   const [busy, setBusy] = useState(null); // null | a key of BUSY
   const [text, setText] = useState(null); // cleaned corpus being viewed
   const [paragraphs, setParagraphs] = useState([]);
   const [view, setView] = useState(null); // null | {type: 'graph', points} | {type: 'table', rows}
 
-  const n = Number(ngrams);
-  const validNgrams = Number.isInteger(n) && n >= 1 && n <= 10;
+  const n = Number(order);
+  const validOrder = Number.isInteger(n) && n >= 1 && n <= MAX_ORDER;
 
   // any settings change invalidates the built chain
   function change(setter) {
@@ -74,8 +74,8 @@ export default function App() {
 
   function openView(type) {
     run(type, () => setView(type === 'graph' ?
-      {type, points: embed(marcus.chain, {rows: TOP_WORDS})} :
-      {type, rows: summarise(marcus.chain).slice(0, TOP_WORDS)}));
+      {type, points: embed(marcus.pairs(), {rows: TOP_WORDS})} :
+      {type, rows: marcus.topContexts(TOP_WORDS)}));
   }
 
   return (
@@ -95,15 +95,15 @@ export default function App() {
       </div>
       <div className="controls">
         <label>
-          N-grams{' '}
-          <input type="number" min="1" max="10" step="1" value={ngrams}
-            onChange={change(setNgrams)} disabled={!!busy} aria-invalid={!validNgrams} />
+          Context words (n){' '}
+          <input type="number" min="1" max={MAX_ORDER} step="1" value={order}
+            onChange={change(setOrder)} disabled={!!busy} aria-invalid={!validOrder} />
         </label>
         <button onClick={() => run('build', async () => setMarcus(buildMarkov(await loadCorpus(corpus), n)))}
-          disabled={!validNgrams || !!busy}>
+          disabled={!validOrder || !!busy}>
           build
         </button>
-        <button onClick={() => setParagraphs([...paragraphs, {text: marcus.generate(), ngrams: marcus.ngramSize}])}
+        <button onClick={() => setParagraphs([...paragraphs, {text: marcus.generate(), order: marcus.order}])}
           disabled={!marcus || !!busy}>
           generate
         </button>
@@ -116,8 +116,8 @@ export default function App() {
         {busy && <><span className="spinner" aria-hidden="true" /> {BUSY[busy]}</>}
       </p>
       <div id="console">
-        {paragraphs.map(({text, ngrams}, i) => (
-          <p key={i}><span className="badge">n={ngrams}</span> {text}</p>
+        {paragraphs.map(({text, order}, i) => (
+          <p key={i}><span className="badge">n={order}</span> {text}</p>
         ))}
       </div>
       {view && marcus && (

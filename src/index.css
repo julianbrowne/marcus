@@ -179,11 +179,8 @@ body {
   text-align: right;
 }
 
+.chain .end,
 .chain small,
 .chain .rest {
   color: #666;
-}
-
-.backdrop circle {
-  fill: #4a6fa5;
 }

@@ -3,7 +3,9 @@
 
 Simple example of markov chain generation
 
-See here: https://julianbrowne.github.io/marcus/test/
+An order-n Markov chain: each next word is sampled from what followed the last *n* words (the "context words" setting, 1-10) in the source text. Small *n* gives novel but rambling text; large *n* gives fluent text that is increasingly copied verbatim from the source (on Pride and Prejudice, ~0% of sentences at n=2, ~70% at n=4, ~98% at n=6), a small-scale version of an LLM's context window and memorisation.
+
+See here: https://julianbrowne.github.io/marcus/
 
 ## TLDR
 
@@ -39,3 +41,11 @@ General-purpose texts for testing clustering (sources and licences in [`src/corp
 `tinystories.txt` - ~3 MB of simple-vocabulary children's stories (CDLA-Sharing-1.0)
 
 `wikitext-2.txt` - the WikiText-2 language-modelling benchmark, from Wikipedia (CC BY-SA)
+
+## Deployment
+
+Pushing to `master` runs `.github/workflows/pages.yml`, which tests, builds and publishes `dist/` to GitHub Pages. One-off setup: in the repo's Settings -> Pages, set the source to "GitHub Actions". The build uses relative paths, so the same `dist/` works locally (`npm run preview`) and under `/marcus/` on Pages.
+
+## License
+
+[CC BY-NC 4.0](LICENSE): free to use, modify and share for non-commercial purposes, with credit to [Marcus by Julian Browne](https://github.com/julianbrowne/marcus). The text corpora in `src/corpus` have their own licences; see [SOURCES.md](src/corpus/SOURCES.md).

@@ -20,8 +20,7 @@ export default function WordMap({points}) {
         <svg width={W} height={H}>
           {points.map(({word, x, y}) => (
             <g key={word} transform={`translate(${sx(x)} ${sy(y)})`}>
-              <circle r="2" />
-              <text x="4" y="4">{word}</text>
+              <text textAnchor="middle" dominantBaseline="middle">{word}</text>
             </g>
           ))}
         </svg>

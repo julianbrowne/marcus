@@ -17,7 +17,7 @@ test('generate is disabled until the chain is built, then appends paragraphs', a
   expect(button('generate').disabled).toBe(true);
 
   fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: './corpus/proverbs.txt'}});
-  fireEvent.change(screen.getByLabelText('N-grams'), {target: {value: '2'}});
+  fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: '2'}});
   fireEvent.click(button('build'));
 
   const generate = await screen.findByRole('button', {name: 'generate'});
@@ -36,12 +36,12 @@ test('clear removes generated text and badges show the n-grams each was built wi
   expect(button('clear').disabled).toBe(true);
 
   fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: './corpus/proverbs.txt'}});
-  fireEvent.change(screen.getByLabelText('N-grams'), {target: {value: '1'}});
+  fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: '1'}});
   fireEvent.click(button('build'));
   await vi.waitFor(() => expect(button('generate').disabled).toBe(false));
   fireEvent.click(button('generate'));
 
-  fireEvent.change(screen.getByLabelText('N-grams'), {target: {value: '3'}});
+  fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: '3'}});
   fireEvent.click(button('build'));
   await vi.waitFor(() => expect(button('generate').disabled).toBe(false));
   fireEvent.click(button('generate'));
@@ -60,19 +60,19 @@ test('changing settings after a build disables generate again', async () => {
   fireEvent.click(button('build'));
   await vi.waitFor(() => expect(button('generate').disabled).toBe(false));
 
-  fireEvent.change(screen.getByLabelText('N-grams'), {target: {value: '3'}});
+  fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: '3'}});
   expect(button('generate').disabled).toBe(true);
 });
 
 test.each(['', '0', '11', '2.5', '-1'])('build is disabled for n-grams "%s"', (value) => {
   render(<App />);
-  fireEvent.change(screen.getByLabelText('N-grams'), {target: {value}});
+  fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value}});
   expect(button('build').disabled).toBe(true);
 });
 
 test.each(['1', '10'])('build is enabled for n-grams "%s"', (value) => {
   render(<App />);
-  fireEvent.change(screen.getByLabelText('N-grams'), {target: {value}});
+  fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value}});
   expect(button('build').disabled).toBe(false);
 });
 
@@ -117,6 +117,7 @@ test('view graph opens a word map; X and Escape close it', async () => {
   expect(screen.queryByRole('menu')).toBeNull();
   const dialog = await screen.findByRole('dialog', {name: 'Word map'});
   expect(dialog.querySelectorAll('svg text')).toHaveLength(300);
+  expect(dialog.querySelectorAll('svg circle')).toHaveLength(0);
 
   fireEvent.click(button('close'));
   expect(screen.queryByRole('dialog')).toBeNull();
@@ -133,10 +134,11 @@ test('view table lists words with their links and can be filtered', async () => 
   const dialog = await screen.findByRole('dialog', {name: 'Chain table'});
   expect(dialog.querySelectorAll('tbody')).toHaveLength(300); // proverbs has more distinct words than that
 
-  fireEvent.change(screen.getByLabelText('filter words'), {target: {value: 'th'}});
-  const words = [...dialog.querySelectorAll('tbody th')].map((th) => th.firstChild.textContent.trim());
-  expect(words).toContain('the');
-  expect(words.every((w) => w.toLowerCase().startsWith('th'))).toBe(true);
+  expect(dialog.querySelector('thead').textContent).toBe('contextnext wordcount%');
+  fireEvent.change(screen.getByLabelText('filter contexts'), {target: {value: 'th'}});
+  const contexts = [...dialog.querySelectorAll('tbody th')].map((th) => th.firstChild.textContent.trim());
+  expect(contexts.length).toBeGreaterThan(0);
+  expect(contexts.every((c) => c.toLowerCase().startsWith('th') && c.split(' ').length === 2)).toBe(true); // default order 2
 
   // only count and % are numeric: the first row of each word has an extra <th>, so position can't be used
   const firstRow = dialog.querySelector('tbody tr');

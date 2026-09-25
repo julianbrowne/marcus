@@ -1,7 +1,7 @@
 {
   "name": "marcus",
   "private": true,
-  "license": "MIT",
+  "license": "CC-BY-NC-4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

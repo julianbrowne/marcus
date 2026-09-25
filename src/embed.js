@@ -1,4 +1,4 @@
-// Word embedding from a Markov chain: count which words precede each word,
+// Word embedding: count which words precede each word,
 // weight with PPMI, then project to 2D with PCA so words used in similar
 // contexts land near each other.
 
@@ -14,24 +14,21 @@ const topByCount = (counts, n) =>
   [...counts].sort((a, b) => b[1] - a[1]).slice(0, n).map(([word]) => word);
 
 // ponytail: dense rows x cols matrix; keep rows ~hundreds (it's also what fits on screen)
-export function embed(chain, {rows = 200, cols = 1000} = {}) {
+// pairs: iterable of [previous word, word], e.g. Markov.pairs()
+export function embed(pairs, {rows = 200, cols = 1000} = {}) {
   const preceders = new Map(); // word -> Map(preceding word -> count)
   const wordCount = new Map();
   const prevCount = new Map();
 
-  // every chain entry "prev -> 'next ...'" means prev immediately precedes next
-  for (const [prevRaw, segments] of Object.entries(chain)) {
+  for (const [prevRaw, wordRaw] of pairs) {
     const prev = norm(prevRaw);
-    if (!prev) continue;
-    for (const segment of segments) {
-      const word = norm(segment.split(' ')[0]);
-      if (!word) continue;
-      if (!preceders.has(word)) preceders.set(word, new Map());
-      const m = preceders.get(word);
-      m.set(prev, (m.get(prev) || 0) + 1);
-      wordCount.set(word, (wordCount.get(word) || 0) + 1);
-      prevCount.set(prev, (prevCount.get(prev) || 0) + 1);
-    }
+    const word = norm(wordRaw);
+    if (!prev || !word) continue;
+    if (!preceders.has(word)) preceders.set(word, new Map());
+    const m = preceders.get(word);
+    m.set(prev, (m.get(prev) || 0) + 1);
+    wordCount.set(word, (wordCount.get(word) || 0) + 1);
+    prevCount.set(prev, (prevCount.get(prev) || 0) + 1);
   }
 
   const words = topByCount(wordCount, rows);
@@ -87,6 +84,9 @@ export function embed(chain, {rows = 200, cols = 1000} = {}) {
       if (!lambda) break;
       v = w.map((x) => x / lambda);
     }
+    // an axis's direction is arbitrary: point it so the most frequent word is positive,
+    // otherwise the picture can mirror when nothing meaningful changed
+    if (v[0] < 0) v = v.map((x) => -x);
     axes.push({u: v, scale: Math.sqrt(lambda)});
   }
 
