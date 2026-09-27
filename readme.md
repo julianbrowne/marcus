@@ -51,7 +51,7 @@ General-purpose texts for testing clustering (sources and licences in [`src/corp
 
 ## Tests
 
-Tests live in `test/` and run with [Vitest](https://vitest.dev). Each run writes a self-contained HTML report to `public/tests/index.html` (git-ignored); the build publishes it and the app links to it from the bottom of the sidebar ("Test report"). The deploy workflow runs the tests before building, so the published report is always from the run that produced that deployment.
+Tests live in `test/` and run with [Vitest](https://vitest.dev). Unit tests read fixed copies of their texts from `test/fixtures/`, and the app tests derive the corpus list from `src/corpus/raw` (naming only `proverbs` and `pride-and-prejudice`), so corpora can be edited, added or removed without breaking the tests. Each run writes a self-contained HTML report to `public/tests/index.html` (git-ignored); the build publishes it and the app links to it from the bottom of the sidebar ("Test report"). The deploy workflow runs the tests before building, so the published report is always from the run that produced that deployment.
 
 ## Deployment
 

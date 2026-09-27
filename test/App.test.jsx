@@ -1,12 +1,21 @@
-import {render, screen, fireEvent, within} from '@testing-library/react';
+// These tests drive the real app, so they read the real corpora in src/corpus. They name
+// only proverbs and pride-and-prejudice (small, stable) and otherwise derive what they
+// expect from the files present, so corpora can be added, edited or removed freely.
+import {readFileSync, readdirSync, statSync} from 'node:fs';
+import {render, screen, fireEvent, within, waitFor} from '@testing-library/react';
 import App from '../src/App';
+
+// tests run from the project root (plain paths: Vite rewrites new URL(..., import.meta.url))
+const corpusFile = (kind, name) => `src/corpus/${kind}/${name}.txt`;
+const RAW_NAMES = readdirSync('src/corpus/raw').filter((f) => f.endsWith('.txt')).map((f) => f.slice(0, -4)).sort();
+const corpusText = (kind, name) => readFileSync(corpusFile(kind, name), 'utf8');
 
 const button = (name) => screen.getByRole('button', {name});
 // picking a corpus loads its profile (with the spinner); wait until that's done
 const pickCorpus = (name) => fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: name}});
 const selectCorpus = async (name) => {
   pickCorpus(name);
-  await vi.waitFor(() => expect(screen.getByLabelText('Corpus').disabled).toBe(false));
+  await waitFor(() => expect(screen.getByLabelText('Corpus').disabled).toBe(false));
 };
 
 // the multi-part view buttons: "view corpus" (raw | clean | profile) and "view chain" (graph | table)
@@ -49,7 +58,7 @@ test('the call to action moves from build (once a corpus is chosen) to generate 
   expect(parts('view chain').every((b) => b.disabled)).toBe(true);
 
   fireEvent.click(button('build'));
-  await vi.waitFor(() => expect(button('generate').disabled).toBe(false));
+  await waitFor(() => expect(button('generate').disabled).toBe(false));
   expect(isCta('build')).toBe(false);
   expect(isCta('generate')).toBe(true);
   expect(parts('view chain').every((b) => !b.disabled)).toBe(true);
@@ -70,10 +79,8 @@ test('the sidebar has corpus and chain sections, divided, with generate and clea
 test('lists every corpus in the selector', () => {
   render(<App />);
   const options = [...screen.getByLabelText('Corpus').options].map((o) => o.textContent);
-  expect(options).toEqual([
-    'select a corpus', 'BattleCreekDec19_2019', 'aesop', 'alice', 'grimm', 'gutenberg-67-books', 'moby-dick', 'pride-and-prejudice', 'proverbs',
-    'sherlock-holmes', 'tiny-shakespeare', 'tinystories', 'trump-speeches', 'wikitext-2',
-  ]);
+  expect(options[0]).toBe('select a corpus');
+  expect([...options.slice(1)].sort()).toEqual(RAW_NAMES); // one entry per file in src/corpus/raw
 });
 
 test('generate is disabled until the chain is built, then appends paragraphs', async () => {
@@ -85,7 +92,7 @@ test('generate is disabled until the chain is built, then appends paragraphs', a
   fireEvent.click(button('build'));
 
   const generate = await screen.findByRole('button', {name: 'generate'});
-  await vi.waitFor(() => expect(generate.disabled).toBe(false));
+  await waitFor(() => expect(generate.disabled).toBe(false));
   fireEvent.click(generate);
   fireEvent.click(generate);
 
@@ -102,12 +109,12 @@ test('clear removes generated text and badges show the n-grams each was built wi
 
   fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: '1'}});
   fireEvent.click(button('build'));
-  await vi.waitFor(() => expect(button('generate').disabled).toBe(false));
+  await waitFor(() => expect(button('generate').disabled).toBe(false));
   fireEvent.click(button('generate'));
 
   fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: '3'}});
   fireEvent.click(button('build'));
-  await vi.waitFor(() => expect(button('generate').disabled).toBe(false));
+  await waitFor(() => expect(button('generate').disabled).toBe(false));
   fireEvent.click(button('generate'));
 
   const badges = [...container.querySelectorAll('#console .badge')].map((b) => b.textContent);
@@ -123,7 +130,7 @@ test('changing settings after a build disables generate again', async () => {
   render(<App />);
   await selectCorpus('proverbs');
   fireEvent.click(button('build'));
-  await vi.waitFor(() => expect(button('generate').disabled).toBe(false));
+  await waitFor(() => expect(button('generate').disabled).toBe(false));
 
   fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: '3'}});
   expect(button('generate').disabled).toBe(true);
@@ -147,7 +154,7 @@ async function buildProverbs() {
   render(<App />);
   await selectCorpus('proverbs');
   fireEvent.click(button('build'));
-  await vi.waitFor(() => expect(part('graph').disabled).toBe(false));
+  await waitFor(() => expect(part('graph').disabled).toBe(false));
 }
 
 test('graph and table are disabled until the chain is built', async () => {
@@ -246,7 +253,7 @@ test('changing the corpus closes any view; changing n closes only the table', as
   expect(screen.getByRole('region', {name: 'Word map'})).toBeTruthy(); // the map doesn't depend on n
 
   fireEvent.click(button('build'));
-  await vi.waitFor(() => expect(part('table').disabled).toBe(false));
+  await waitFor(() => expect(part('table').disabled).toBe(false));
   openView('table');
   await findView('Chain table');
   fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: '2'}});
@@ -254,7 +261,7 @@ test('changing the corpus closes any view; changing n closes only the table', as
 
   openView('profile');
   await findView('Profile');
-  await selectCorpus('aesop');
+  await selectCorpus('pride-and-prejudice');
   expect(screen.queryByRole('region', {name: 'Profile'})).toBeNull();
 });
 
@@ -264,31 +271,31 @@ test('raw, clean and profile are available before any build', async () => {
   expect(parts('view corpus').every((b) => !b.disabled)).toBe(true);
 });
 
-test('raw and clean views show the source and the cleaned text', async () => {
+test('raw and clean views show the source file and the cleaned text', async () => {
   render(<App />);
-  await selectCorpus('BattleCreekDec19_2019');
+  await selectCorpus('proverbs');
 
   openView('raw');
   let view = await findView('Raw text');
-  expect(view.querySelector('pre').textContent.startsWith('Thank you. Thank you. Thank you to Vice President Pence.')).toBe(true);
-  expect(view.querySelector('.scroll pre')).not.toBeNull();
+  expect(view.querySelector('.scroll pre').textContent).toBe(corpusText('raw', 'proverbs'));
 
   openView('clean');
   view = await findView('Clean text');
-  const text = view.querySelector('pre').textContent;
-  expect(text.startsWith('thank you\nthank you to Vice President Pence')).toBe(true);
-  expect(text).not.toContain('"');
+  expect(view.querySelector('pre').textContent).toBe(corpusText('clean', 'proverbs'));
+  expect(view.querySelector('pre').textContent).not.toMatch(/[".,;!?]/); // what the cleaner guarantees
   fireEvent.click(button('close'));
   expect(screen.queryByRole('region', {name: 'Clean text'})).toBeNull();
 });
 
 test('big corpora show only the start of their text', async () => {
+  const big = RAW_NAMES.find((name) => statSync(corpusFile('raw', name)).size > 1_100_000);
+  expect(big).toBeTruthy(); // at least one corpus is over the display limit
   render(<App />);
-  await selectCorpus('tinystories');
+  await selectCorpus(big);
   openView('raw');
   const view = await findView('Raw text');
   expect(view.querySelector('pre').textContent).toHaveLength(1_000_000);
-  expect(view.querySelector('.hint').textContent).toMatch(/Showing the first 1,000,000 of 3,\d{3},\d{3} characters/);
+  expect(view.querySelector('.hint').textContent).toMatch(/Showing the first 1,000,000 of [\d,]+ characters/);
 });
 
 test('profile shows size, readability, parts of speech, tone and common words', async () => {
@@ -314,7 +321,7 @@ test('a spinner and status message show while blocking work runs', async () => {
   expect(button('build').disabled).toBe(true);
   expect(parts('view corpus').every((b) => b.disabled)).toBe(true);
 
-  await vi.waitFor(() => expect(part('graph').disabled).toBe(false));
+  await waitFor(() => expect(part('graph').disabled).toBe(false));
   expect(status.textContent).toBe('');
   expect(status.querySelector('.spinner')).toBeNull();
 
@@ -326,7 +333,7 @@ test('a spinner and status message show while blocking work runs', async () => {
 
 test('selecting a corpus shows a spinner until its figures load, with controls disabled meanwhile', async () => {
   render(<App />);
-  pickCorpus('gutenberg-67-books');
+  pickCorpus('pride-and-prejudice');
   const status = screen.getByRole('status');
   expect(status.textContent).toContain('Loading corpus');
   expect(status.querySelector('.spinner')).not.toBeNull();

@@ -1,6 +1,6 @@
 import {Markov} from '../src/markov';
 import {embed} from '../src/embed';
-import grimm from '../src/corpus/raw/grimm.txt?raw';
+import grimm from './fixtures/grimm.txt?raw';
 
 const groups = {
   days: ['monday', 'tuesday', 'friday'],
@@ -58,15 +58,25 @@ test('"and" (preceded by almost everything) is not a lone outlier in a real corp
 
 test('the picture keeps its orientation whatever order the pairs arrive in', async () => {
   const {clean} = await import('../src/textprep');
-  const {default: raw} = await import('../src/corpus/raw/pride-and-prejudice.txt?raw');
-  const pairs = [...pairsFor(clean(raw))];
-  // the order the old chain gave: grouped by previous word (this mirrored the y axis)
+  // grimm: without the orientation rule, reversing its pairs mirrors both axes at 300 words
+  const pairs = [...pairsFor(clean(grimm))];
   const groups = new Map();
   for (const pair of pairs) groups.set(pair[0], [...(groups.get(pair[0]) || []), pair]);
-  const a = embed(pairs, {rows: 300}); // as the app uses it
-  const b = new Map(embed([...groups.values()].flat(), {rows: 300}).map((p) => [p.word, p]));
-  const same = a.filter((p) => b.has(p.word));
-  const agree = (axis) => same.filter((p) => Math.sign(p[axis]) === Math.sign(b.get(p.word)[axis])).length / same.length;
-  expect(agree('x')).toBeGreaterThan(0.95); // a mirrored axis gives ~0
-  expect(agree('y')).toBeGreaterThan(0.95);
+  const orders = [
+    pairs,
+    [...pairs].reverse(),
+    [...groups.values()].flat(), // the order the old chain gave, which once mirrored the map
+    [...pairs].sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0)),
+  ];
+  const maps = orders.map((o) => embed(o, {rows: 300})); // as the app uses it
+  const reference = new Map(maps[0].map((p) => [p.word, p]));
+  for (const points of maps) {
+    // the rule: each axis points so the most frequent word is on the positive side
+    expect(points[0].x).toBeGreaterThanOrEqual(0);
+    expect(points[0].y).toBeGreaterThanOrEqual(0);
+    const same = points.filter((p) => reference.has(p.word));
+    const agree = (axis) => same.filter((p) => Math.sign(p[axis]) === Math.sign(reference.get(p.word)[axis])).length / same.length;
+    expect(agree('x')).toBeGreaterThan(0.9); // a mirrored axis gives ~0; words right on an axis can wobble
+    expect(agree('y')).toBeGreaterThan(0.9);
+  }
 });
