@@ -288,7 +288,9 @@ test('raw and clean views show the source file and the cleaned text', async () =
 });
 
 test('big corpora show only the start of their text', async () => {
-  const big = RAW_NAMES.find((name) => statSync(corpusFile('raw', name)).size > 1_100_000);
+  // the smallest corpus over the display limit: same check, far less to load than the biggest
+  const big = RAW_NAMES.map((name) => [name, statSync(corpusFile('raw', name)).size])
+    .filter(([, size]) => size > 1_100_000).sort((a, b) => a[1] - b[1])[0]?.[0];
   expect(big).toBeTruthy(); // at least one corpus is over the display limit
   render(<App />);
   await selectCorpus(big);
