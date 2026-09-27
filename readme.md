@@ -31,7 +31,7 @@ Both folders are generated (and git-ignored); a corpus is only re-prepared when 
 
 `tiny-shakespeare.txt` - the classic Shakespeare training set
 
-`trump.txt` - Trump Speeches
+`trump-speeches.txt` - Trump speeches
 
 `grimm.txt` - Brother's Grimm Fairy Tales
 
@@ -41,7 +41,9 @@ General-purpose texts for testing clustering (sources and licences in [`src/corp
 
 `aesop.txt`, `alice.txt`, `pride-and-prejudice.txt`, `sherlock-holmes.txt` - public domain books from Project Gutenberg
 
-`gutenberg.txt` - ~50 MB: 67 popular public domain books from Project Gutenberg in one file. Recreate or resize with `node scripts/fetch-gutenberg.mjs [count]` (writes `src/corpus/raw/gutenberg.txt`) (it waits 2s between downloads, per Gutenberg's robot policy)
+`moby-dick.txt` - *Moby Dick* by Herman Melville, from Project Gutenberg
+
+`gutenberg-67-books.txt` - ~50 MB: 67 popular public domain books from Project Gutenberg in one file (Moby Dick is the first), for trying a really big corpus. Recreate or resize with `node scripts/fetch-gutenberg.mjs [count]` (writes `src/corpus/raw/gutenberg-67-books.txt`; it waits 2s between downloads, per Gutenberg's robot policy)
 
 `tinystories.txt` - ~3 MB of simple-vocabulary children's stories (CDLA-Sharing-1.0)
 

@@ -52,7 +52,7 @@ test('lists every corpus in the selector', () => {
   render(<App />);
   const options = [...screen.getByLabelText('Corpus').options].map((o) => o.textContent);
   expect(options).toEqual([
-    'select a corpus', 'BattleCreekDec19_2019', 'aesop', 'alice', 'grimm', 'gutenberg', 'pride-and-prejudice', 'proverbs',
+    'select a corpus', 'BattleCreekDec19_2019', 'aesop', 'alice', 'grimm', 'gutenberg-67-books', 'moby-dick', 'pride-and-prejudice', 'proverbs',
     'sherlock-holmes', 'tiny-shakespeare', 'tinystories', 'trump-speeches', 'wikitext-2',
   ]);
 });
@@ -307,7 +307,7 @@ test('a spinner and status message show while blocking work runs', async () => {
 
 test('selecting a corpus shows a spinner until its figures load, with controls disabled meanwhile', async () => {
   render(<App />);
-  pickCorpus('gutenberg');
+  pickCorpus('gutenberg-67-books');
   const status = screen.getByRole('status');
   expect(status.textContent).toContain('Loading corpus');
   expect(status.querySelector('.spinner')).not.toBeNull();

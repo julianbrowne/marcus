@@ -13,7 +13,7 @@ import {writeFileSync} from 'node:fs';
 
 const MIRROR = 'https://gutenberg.pglaf.org/cache/epub';
 const DELAY_MS = 2000;
-const OUT = new URL('../src/corpus/raw/gutenberg.txt', import.meta.url);
+const OUT = new URL('../src/corpus/raw/gutenberg-67-books.txt', import.meta.url);
 
 const BOOKS = [
   [2701, "Moby Dick; Or, The Whale"],
@@ -98,4 +98,4 @@ for (const [id, title] of BOOKS.slice(0, count)) {
   await new Promise((r) => setTimeout(r, DELAY_MS));
 }
 writeFileSync(OUT, texts.join('\n\n'));
-console.log(`wrote ${texts.length} books to src/corpus/raw/gutenberg.txt`);
+console.log(`wrote ${texts.length} books to src/corpus/raw/gutenberg-67-books.txt`);
