@@ -51,6 +51,7 @@ test('clear removes generated text and badges show the n-grams each was built wi
 
   fireEvent.click(button('clear'));
   expect(container.querySelectorAll('#console p')).toHaveLength(0);
+  expect(container.querySelector('#console .empty').textContent).toBe('Nothing generated yet.');
   expect(button('clear').disabled).toBe(true);
 });
 
@@ -227,4 +228,13 @@ test('a spinner and status message show while blocking work runs', async () => {
   expect(status.textContent).toContain('Loading word map');
   await screen.findByRole('dialog', {name: 'Word map: proverbs'});
   expect(status.textContent).toBe('');
+});
+
+test('the selected corpus shows its headline figures from the build-time profile', async () => {
+  render(<App />);
+  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: 'pride-and-prejudice'}});
+  expect(screen.getByRole('heading', {level: 1}).textContent).toBe('pride-and-prejudice');
+  const stats = await screen.findAllByText(/^(Words|Sentences|Reading ease|Tone)$/);
+  expect(stats.map((s) => s.textContent)).toEqual(['Words', 'Sentences', 'Reading ease', 'Tone']);
+  expect(stats[2].nextSibling.textContent).toMatch(/^\d+$/); // Flesch score
 });

@@ -21,7 +21,7 @@ export default function ChainTable({rows}) {
       <div className="scroll">
         <table className="chain">
           <thead>
-            <tr><th>context</th><th>next word</th><th>count</th><th>%</th></tr>
+            <tr><th>context</th><th>next word</th><th className="num">count</th><th className="num">%</th></tr>
           </thead>
           {matches.map(({context, total, links}) => {
             const top = links.slice(0, MAX_LINKS);

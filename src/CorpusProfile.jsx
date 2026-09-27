@@ -1,9 +1,10 @@
-import {POS_COLOURS} from './pos';
+import {posColour} from './pos';
 
 const num = (n) => n.toLocaleString();
 
 // profile: src/corpus/profile/<name>.json, made at build time by scripts/prepare-corpora.mjs
 export default function CorpusProfile({profile: p}) {
+  const largest = Math.max(...Object.values(p.partsOfSpeech));
   return (
     <div className="scroll profile">
       <section>
@@ -32,7 +33,7 @@ export default function CorpusProfile({profile: p}) {
             {Object.entries(p.partsOfSpeech).map(([pos, share]) => (
               <tr key={pos}>
                 <th>{pos}</th>
-                <td><span className="bar" style={{width: `${share}%`, background: POS_COLOURS[pos]}} /></td>
+                <td><span className="bar" style={{width: `${(100 * share) / largest}%`, background: posColour(pos)}} /></td>
                 <td className="num">{share}%</td>
               </tr>
             ))}
@@ -51,13 +52,13 @@ export default function CorpusProfile({profile: p}) {
         <p className="hint">Sentiment is scored from a word list: a guide to overall tone, not a judgement of single sentences.</p>
       </section>
 
-      <section>
+      <section className="wide">
         <h3>Most common content words</h3>
         <p className="words">{p.topWords.map(({word, count}) => <span key={word}>{word} <small>{num(count)}</small></span>)}</p>
       </section>
 
       {p.entities.length > 0 && (
-        <section>
+        <section className="wide">
           <h3>Numbers, dates and amounts</h3>
           <table className="entities">
             <tbody>

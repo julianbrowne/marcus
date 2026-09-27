@@ -11,13 +11,5 @@ export const POS_GROUPS = {
   'function word': ['DET', 'ADP', 'CCONJ', 'SCONJ', 'PART', 'NUM', 'INTJ', 'SYM', 'X'],
 };
 
-// categorical slots 1-7 of the dataviz reference palette, validated for colour-blind separation
-export const POS_COLOURS = {
-  noun: '#2a78d6',
-  verb: '#eb6834',
-  adjective: '#1baf7a',
-  adverb: '#eda100',
-  pronoun: '#e87ba4',
-  name: '#008300',
-  'function word': '#4a3aa7',
-};
+// colours are CSS tokens (--pos-noun etc. in index.css) so they follow light/dark mode
+export const posColour = (pos) => (pos ? `var(--pos-${pos.replace(' ', '-')})` : 'var(--muted-foreground)');

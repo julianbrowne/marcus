@@ -1,4 +1,5 @@
-import {useState} from 'react';
+import {useEffect, useState} from 'react';
+import {Blocks, Eraser, Sparkles, Waypoints} from 'lucide-react';
 import {Markov, MAX_ORDER} from './markov';
 import Modal from './Modal';
 import WordMap from './WordMap';
@@ -69,6 +70,16 @@ const views = {
   table: (rows) => <ChainTable rows={rows} />,
 };
 
+function Stat({label, value, note}) {
+  return (
+    <div className="card stat">
+      <div className="stat-label">{label}</div>
+      <div className="stat-value">{value}</div>
+      <div className="stat-note">{note}</div>
+    </div>
+  );
+}
+
 export default function App() {
   const [corpus, setCorpus] = useState(CORPORA.includes('trump') ? 'trump' : CORPORA[0]);
   const [order, setOrder] = useState('2'); // context words
@@ -76,6 +87,16 @@ export default function App() {
   const [busy, setBusy] = useState(null); // null | a key of BUSY
   const [paragraphs, setParagraphs] = useState([]);
   const [view, setView] = useState(null); // null | {type: a key of views, data} for the open popup
+  const [profile, setProfile] = useState(null); // headline figures for the selected corpus
+
+  useEffect(() => {
+    let current = true;
+    setProfile(null);
+    load('profile', corpus).then((p) => current && setProfile(p));
+    return () => {
+      current = false;
+    };
+  }, [corpus]);
 
   const n = Number(order);
   const validOrder = Number.isInteger(n) && n >= 1 && n <= MAX_ORDER;
@@ -109,44 +130,93 @@ export default function App() {
   }
 
   return (
-    <div className="container">
-      <h1>Marcus</h1>
-      <div className="controls">
-        <label>
-          Corpus{' '}
-          <select value={corpus} onChange={change(setCorpus)} disabled={!!busy}>
-            {CORPORA.map((name) => <option key={name} value={name}>{name}</option>)}
-          </select>
-        </label>
-        <ViewMenu options={['raw', 'clean', 'profile']} label="view corpus" disabled={!!busy} onSelect={open} />
-      </div>
-      <div className="controls">
-        <label>
-          Context words (n){' '}
-          <input type="number" min="1" max={MAX_ORDER} step="1" value={order}
-            onChange={change(setOrder)} disabled={!!busy} aria-invalid={!validOrder} />
-        </label>
-        <button onClick={() => run('build', async () => setMarcus(buildMarkov(await load('clean', corpus), n)))}
-          disabled={!validOrder || !!busy}>
-          build
-        </button>
-        <button onClick={() => setParagraphs([...paragraphs, {text: marcus.generate(), order: marcus.order}])}
-          disabled={!marcus || !!busy}>
-          generate
-        </button>
-        <button onClick={() => setParagraphs([])} disabled={paragraphs.length === 0}>
-          clear
-        </button>
-        <ViewMenu options={['graph', 'table']} disabled={!marcus || !!busy} onSelect={open} />
-      </div>
-      <p className="status" role="status">
-        {busy && <><span className="spinner" aria-hidden="true" /> {BUSY[busy]}</>}
-      </p>
-      <div id="console">
-        {paragraphs.map(({text, order}, i) => (
-          <p key={i}><span className="badge">n={order}</span> {text}</p>
-        ))}
-      </div>
+    <div className="app">
+      <aside className="sidebar">
+        <div className="brand">
+          <span className="brand-mark"><Waypoints size={18} aria-hidden="true" /></span>
+          <div>
+            <strong>Marcus</strong>
+            <small>Markov chain explorer</small>
+          </div>
+        </div>
+
+        <section className="group">
+          <h2 className="group-label">Corpus</h2>
+          <label className="field">
+            <span className="sr-only">Corpus</span>
+            <select value={corpus} onChange={change(setCorpus)} disabled={!!busy}>
+              {CORPORA.map((name) => <option key={name} value={name}>{name}</option>)}
+            </select>
+          </label>
+          <ViewMenu options={['raw', 'clean', 'profile']} label="view corpus" disabled={!!busy} onSelect={open} />
+        </section>
+
+        <section className="group">
+          <h2 className="group-label">Chain</h2>
+          <label className="field">
+            Context words (n)
+            <input type="number" min="1" max={MAX_ORDER} step="1" value={order}
+              onChange={change(setOrder)} disabled={!!busy} aria-invalid={!validOrder} />
+          </label>
+          <button className="primary" onClick={() => run('build', async () => setMarcus(buildMarkov(await load('clean', corpus), n)))}
+            disabled={!validOrder || !!busy}>
+            <Blocks aria-hidden="true" /> build
+          </button>
+          <ViewMenu options={['graph', 'table']} disabled={!marcus || !!busy} onSelect={open} />
+        </section>
+
+        <footer className="sidebar-footer">
+          <a href="https://github.com/julianbrowne/marcus">Source on GitHub</a> · CC BY-NC 4.0
+        </footer>
+      </aside>
+
+      <main className="main">
+        <header className="page-header">
+          <div>
+            <h1>{corpus}</h1>
+            <p className="muted">
+              {marcus ? `Chain built with ${marcus.order} context word${marcus.order > 1 ? 's' : ''}.` : 'Choose a context length and build the chain.'}
+            </p>
+          </div>
+          <p className="status" role="status">
+            {busy && <><span className="spinner" aria-hidden="true" /> {BUSY[busy]}</>}
+          </p>
+        </header>
+
+        {profile && (
+          <div className="stats">
+            <Stat label="Words" value={profile.words.toLocaleString()} note={`${profile.distinctWords.toLocaleString()} distinct`} />
+            <Stat label="Sentences" value={profile.sentences.toLocaleString()} note={`${profile.wordsPerSentence} words each on average`} />
+            <Stat label="Reading ease" value={profile.readability.flesch} note={`Flesch score: ${profile.readability.band}`} />
+            <Stat label="Tone" value={`${profile.sentiment.positivePct}%`} note={`positive sentences, ${profile.sentiment.negativePct}% negative`} />
+          </div>
+        )}
+
+        <section className="card">
+          <div className="card-header">
+            <div>
+              <h2>Generated text</h2>
+              <p className="muted">Each paragraph is five sentences sampled from the chain.</p>
+            </div>
+            <div className="actions">
+              <button className="primary" onClick={() => setParagraphs([...paragraphs, {text: marcus.generate(), order: marcus.order}])}
+                disabled={!marcus || !!busy}>
+                <Sparkles aria-hidden="true" /> generate
+              </button>
+              <button onClick={() => setParagraphs([])} disabled={paragraphs.length === 0}>
+                <Eraser aria-hidden="true" /> clear
+              </button>
+            </div>
+          </div>
+          <div id="console" className="card-content">
+            {paragraphs.length === 0 && <div className="empty">Nothing generated yet.</div>}
+            {paragraphs.map(({text, order}, i) => (
+              <p key={i}><span className="badge">n={order}</span> {text}</p>
+            ))}
+          </div>
+        </section>
+      </main>
+
       {view && (
         <Modal title={`${TITLES[view.type]}: ${corpus}`} onClose={() => setView(null)}>
           {views[view.type](view.data)}

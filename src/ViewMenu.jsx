@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
+import {ChevronDown} from 'lucide-react';
 
 // a "view ▾" button with a menu of options; `label` names the button for screen readers
 export default function ViewMenu({options, label, disabled, onSelect}) {
@@ -21,7 +22,7 @@ export default function ViewMenu({options, label, disabled, onSelect}) {
   return (
     <div className="dropdown" ref={ref} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}>
       <button onClick={() => setOpen(!open)} disabled={disabled} aria-haspopup="menu" aria-expanded={open} aria-label={label}>
-        view <span aria-hidden="true">▾</span>
+        view <ChevronDown aria-hidden="true" />
       </button>
       {open && !disabled && (
         <div className="menu" role="menu">

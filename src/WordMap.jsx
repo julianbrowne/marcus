@@ -1,11 +1,10 @@
-import {useState} from 'react';
-import {POS_COLOURS} from './pos';
+import {useLayoutEffect, useRef, useState} from 'react';
+import {POS_GROUPS, posColour} from './pos';
 
 const ZOOM = 3; // spread points out; labels stay the same size
 const W = 800 * ZOOM;
 const H = 600 * ZOOM;
 const PAD = 40;
-const UNTAGGED = '#8a8a86';
 
 function scale(values, size) {
   const min = Math.min(...values);
@@ -19,7 +18,16 @@ export default function WordMap({map}) {
   const [focus, setFocus] = useState(null); // highlighted part of speech
   const sx = scale(points.map((p) => p.x), W);
   const sy = scale(points.map((p) => p.y), H);
-  const counts = Object.fromEntries(Object.keys(POS_COLOURS).map((pos) => [pos, points.filter((p) => p.pos === pos).length]));
+
+  // the canvas is several screens wide: open centred on the middle of the words, not the empty corner
+  const scroller = useRef(null);
+  useLayoutEffect(() => {
+    const el = scroller.current;
+    const mid = (values) => values.reduce((a, b) => a + b, 0) / values.length;
+    el.scrollLeft = mid(points.map((p) => sx(p.x))) - el.clientWidth / 2;
+    el.scrollTop = mid(points.map((p) => sy(p.y))) - el.clientHeight / 2;
+  }, [points]); // sx, sy derive from points
+  const counts = Object.fromEntries(Object.keys(POS_GROUPS).map((pos) => [pos, points.filter((p) => p.pos === pos).length]));
 
   return (
     <>
@@ -28,19 +36,19 @@ export default function WordMap({map}) {
         {agreement && ` A word's ${agreement.neighbours} nearest neighbours share its part of speech ${agreement.sharePct}% of the time (${agreement.chancePct}% by chance), though the map was never told any grammar.`}
       </p>
       <div className="legend">
-        {Object.entries(POS_COLOURS).filter(([pos]) => counts[pos]).map(([pos, colour]) => (
+        {Object.keys(POS_GROUPS).filter((pos) => counts[pos]).map((pos) => (
           <button key={pos} aria-pressed={focus === pos} onClick={() => setFocus(focus === pos ? null : pos)}>
-            <span className="swatch" style={{background: colour}} aria-hidden="true" />
+            <span className="swatch" style={{background: posColour(pos)}} aria-hidden="true" />
             {pos} <small>{counts[pos]}</small>
           </button>
         ))}
       </div>
-      <div className="scroll">
+      <div className="scroll" ref={scroller}>
         <svg width={W} height={H}>
           {points.map(({word, x, y, pos}) => (
             <g key={word} transform={`translate(${sx(x)} ${sy(y)})`} opacity={focus && pos !== focus ? 0.15 : 1}>
               <title>{`${word}: ${pos ?? 'untagged'}`}</title>
-              <circle r="4" fill={POS_COLOURS[pos] ?? UNTAGGED} />
+              <circle r="4" fill={posColour(pos)} />
               <text x="7" dominantBaseline="middle">{word}</text>
             </g>
           ))}
