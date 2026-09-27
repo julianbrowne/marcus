@@ -7,7 +7,7 @@
 // Runs before dev, build and test. A corpus is skipped when its outputs are
 // newer than its raw file and the code that produces them.
 
-import {readdirSync, readFileSync, writeFileSync, mkdirSync, statSync, existsSync} from 'node:fs';
+import {readdirSync, readFileSync, writeFileSync, mkdirSync, statSync, existsSync, rmSync} from 'node:fs';
 import {clean, prepare} from '../src/textprep.js';
 import {Markov} from '../src/markov.js';
 import {embed} from '../src/embed.js';
@@ -27,6 +27,15 @@ const codeTime = Math.max(...CODE.map(mtime));
 
 mkdirSync(CLEAN, {recursive: true});
 mkdirSync(PROFILE, {recursive: true});
+
+// remove outputs whose raw file has gone (renamed or deleted corpora)
+const names = new Set(readdirSync(RAW).filter((f) => f.endsWith('.txt')).map((f) => f.replace(/\.txt$/, '')));
+for (const [folder, ext] of [[CLEAN, '.txt'], [PROFILE, '.json']]) {
+  for (const f of readdirSync(folder).filter((f) => f.endsWith(ext) && !names.has(f.slice(0, -ext.length)))) {
+    rmSync(new URL(f, folder));
+    console.log(`removed stale ${f}`);
+  }
+}
 
 for (const file of readdirSync(RAW).filter((f) => f.endsWith('.txt')).sort()) {
   const name = file.replace(/\.txt$/, '');

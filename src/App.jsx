@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useState} from 'react';
 import {Blocks, Eraser, FlaskConical, Sparkles, Waypoints, X} from 'lucide-react';
 import {Markov, MAX_ORDER} from './markov';
 import WordMap from './WordMap';
@@ -24,6 +24,7 @@ const MAX_VIEW_CHARS = 1_000_000;
 
 // status shown with the spinner while each blocking task runs
 const BUSY = {
+  corpus: 'Loading corpus…',
   raw: 'Loading raw text…',
   clean: 'Loading clean text…',
   profile: 'Loading profile…',
@@ -88,23 +89,18 @@ export default function App() {
   const [view, setView] = useState(null); // null (generated text) | {type: a key of views, data} shown in the main pane
   const [profile, setProfile] = useState(null); // headline figures for the selected corpus
 
-  useEffect(() => {
-    let current = true;
-    setProfile(null);
-    if (corpus) load('profile', corpus).then((p) => current && setProfile(p));
-    return () => {
-      current = false;
-    };
-  }, [corpus]);
-
   const n = Number(order);
   const validOrder = Number.isInteger(n) && n >= 1 && n <= MAX_ORDER;
 
   // any settings change invalidates the built chain, and any view showing the old data
   function chooseCorpus(e) {
-    setCorpus(e.target.value);
+    const name = e.target.value;
+    setCorpus(name);
     setMarcus(null);
     setView(null);
+    setProfile(null);
+    // with the spinner: on a slow connection the figures can take a moment
+    run('corpus', async () => setProfile(await load('profile', name)));
   }
 
   function chooseOrder(e) {
@@ -179,6 +175,8 @@ export default function App() {
             disabled={!corpus || !validOrder || !!busy}>
             <Blocks aria-hidden="true" /> build
           </button>
+          <SegmentedButtons label="view chain" options={['graph', 'table']} active={view?.type}
+            disabled={!marcus || !!busy} onSelect={toggle} />
           <div className="button-row">
             <button onClick={generate} disabled={!marcus || !!busy}>
               <Sparkles aria-hidden="true" /> generate
@@ -187,8 +185,6 @@ export default function App() {
               <Eraser aria-hidden="true" /> clear
             </button>
           </div>
-          <SegmentedButtons label="view chain" options={['graph', 'table']} active={view?.type}
-            disabled={!marcus || !!busy} onSelect={toggle} />
         </section>
 
         <footer className="sidebar-footer">
