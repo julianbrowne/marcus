@@ -12,7 +12,7 @@ See here: https://julianbrowne.github.io/marcus/
 ```
 npm install
 npm run dev     # open the printed URL and click "generate"
-npm test        # run tests
+npm test        # run tests (in test/); also writes an HTML report to public/tests/index.html
 npm run build   # static build in dist/
 ```
 
@@ -46,6 +46,10 @@ General-purpose texts for testing clustering (sources and licences in [`src/corp
 `tinystories.txt` - ~3 MB of simple-vocabulary children's stories (CDLA-Sharing-1.0)
 
 `wikitext-2.txt` - the WikiText-2 language-modelling benchmark, from Wikipedia (CC BY-SA)
+
+## Tests
+
+Tests live in `test/` and run with [Vitest](https://vitest.dev). Each run writes a self-contained HTML report to `public/tests/index.html` (git-ignored); the build publishes it and the app links to it from the bottom of the sidebar ("Test report"). The deploy workflow runs the tests before building, so the published report is always from the run that produced that deployment.
 
 ## Deployment
 

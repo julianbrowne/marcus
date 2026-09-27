@@ -258,3 +258,11 @@ test('the selected corpus shows its headline figures from the build-time profile
   expect(stats.map((s) => s.textContent)).toEqual(['Words', 'Sentences', 'Reading ease', 'Tone']);
   expect(stats[2].nextSibling.textContent).toMatch(/^\d+$/); // Flesch score
 });
+
+test('the sidebar links to the test report, above the source link', () => {
+  const {container} = render(<App />);
+  const links = [...container.querySelectorAll('.sidebar-footer a')];
+  expect(links.map((a) => a.textContent.trim())).toEqual(['Test report', 'Source on GitHub']);
+  expect(links[0].getAttribute('href')).toBe('./tests/index.html'); // relative, so it works under /marcus/ on Pages
+  expect(links[0].getAttribute('target')).toBe('_blank');
+});

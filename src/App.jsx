@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {Blocks, Eraser, Sparkles, Waypoints} from 'lucide-react';
+import {Blocks, Eraser, FlaskConical, Sparkles, Waypoints} from 'lucide-react';
 import {Markov, MAX_ORDER} from './markov';
 import Modal from './Modal';
 import WordMap from './WordMap';
@@ -167,7 +167,12 @@ export default function App() {
         </section>
 
         <footer className="sidebar-footer">
-          <a href="https://github.com/julianbrowne/marcus">Source on GitHub</a> · CC BY-NC 4.0
+          <a className="test-report" href="./tests/index.html" target="_blank" rel="noopener">
+            <FlaskConical aria-hidden="true" /> Test report
+          </a>
+          <div>
+            <a href="https://github.com/julianbrowne/marcus">Source on GitHub</a> · CC BY-NC 4.0
+          </div>
         </footer>
       </aside>
 

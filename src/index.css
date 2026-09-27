@@ -176,11 +176,33 @@ a {
 }
 
 .sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   margin-top: auto;
   padding: 12px 4px 0;
   border-top: 1px solid var(--border);
   color: var(--muted-foreground);
   font-size: 12px;
+}
+
+.test-report {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--foreground);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.test-report:hover {
+  text-decoration: underline;
+}
+
+.test-report svg {
+  width: 14px;
+  height: 14px;
 }
 
 .main {
