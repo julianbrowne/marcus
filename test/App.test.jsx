@@ -1,22 +1,39 @@
 import {render, screen, fireEvent} from '@testing-library/react';
-import App from './App';
+import App from '../src/App';
 
 const button = (name) => screen.getByRole('button', {name});
+const selectCorpus = (name) => fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: name}});
+
+test('starts with no corpus selected, a blank main pane and nothing to build or view', () => {
+  const {container} = render(<App />);
+  const select = screen.getByLabelText('Corpus');
+  expect(select.value).toBe('');
+  expect(select.selectedOptions[0].textContent).toBe('select a corpus');
+  expect(select.options[0].disabled).toBe(true); // can't go back to "no corpus"
+  expect(container.querySelector('main').children).toHaveLength(0);
+  expect(button('build').disabled).toBe(true);
+  expect(button('view corpus').disabled).toBe(true);
+
+  selectCorpus('proverbs');
+  expect(screen.getByRole('heading', {level: 1}).textContent).toBe('proverbs');
+  expect(button('build').disabled).toBe(false);
+  expect(button('view corpus').disabled).toBe(false);
+});
 
 test('lists every corpus in the selector', () => {
   render(<App />);
   const options = [...screen.getByLabelText('Corpus').options].map((o) => o.textContent);
   expect(options).toEqual([
-    'BattleCreekDec19_2019', 'aesop', 'alice', 'grimm', 'gutenberg', 'pride-and-prejudice', 'proverbs',
+    'select a corpus', 'BattleCreekDec19_2019', 'aesop', 'alice', 'grimm', 'gutenberg', 'pride-and-prejudice', 'proverbs',
     'sherlock-holmes', 'tiny-shakespeare', 'tinystories', 'trump', 'wikitext-2',
   ]);
 });
 
 test('generate is disabled until the chain is built, then appends paragraphs', async () => {
   const {container} = render(<App />);
+  selectCorpus('proverbs');
   expect(button('generate').disabled).toBe(true);
 
-  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: 'proverbs'}});
   fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: '2'}});
   fireEvent.click(button('build'));
 
@@ -33,9 +50,9 @@ test('generate is disabled until the chain is built, then appends paragraphs', a
 
 test('clear removes generated text and badges show the n-grams each was built with', async () => {
   const {container} = render(<App />);
+  selectCorpus('proverbs');
   expect(button('clear').disabled).toBe(true);
 
-  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: 'proverbs'}});
   fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: '1'}});
   fireEvent.click(button('build'));
   await vi.waitFor(() => expect(button('generate').disabled).toBe(false));
@@ -67,12 +84,14 @@ test('changing settings after a build disables generate again', async () => {
 
 test.each(['', '0', '11', '2.5', '-1'])('build is disabled for n-grams "%s"', (value) => {
   render(<App />);
+  selectCorpus('proverbs');
   fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value}});
   expect(button('build').disabled).toBe(true);
 });
 
 test.each(['1', '10'])('build is enabled for n-grams "%s"', (value) => {
   render(<App />);
+  selectCorpus('proverbs');
   fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value}});
   expect(button('build').disabled).toBe(false);
 });
@@ -165,6 +184,7 @@ test('view table lists words with their links and can be filtered', async () => 
 
 test('view corpus offers raw, clean and profile, available before any build', () => {
   render(<App />);
+  selectCorpus('proverbs');
   expect(button('view corpus').disabled).toBe(false);
   fireEvent.click(button('view corpus'));
   expect(screen.getAllByRole('menuitem').map((b) => b.textContent)).toEqual(['raw', 'clean', 'profile']);

@@ -1,9 +1,9 @@
 import {
   normaliseUnicode, stripGutenberg, detokenise, stripNonProse, removeLabelLines, linesAreSentences, splitSentences,
   cleanSentence, collapseRepeats, dropRepeats, truecase, clean,
-} from './textprep';
-import battleCreek from './corpus/raw/BattleCreekDec19_2019.txt?raw';
-import proverbs from './corpus/raw/proverbs.txt?raw';
+} from '../src/textprep';
+import battleCreek from '../src/corpus/raw/BattleCreekDec19_2019.txt?raw';
+import proverbs from '../src/corpus/raw/proverbs.txt?raw';
 
 test('normaliseUnicode folds typography to plain ASCII forms', () => {
   expect(normaliseUnicode('“Hi” ‘there’… a—b a--b c​\r\nd\te'))

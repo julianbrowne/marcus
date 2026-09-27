@@ -1,4 +1,4 @@
-import {analyse, neighbourAgreement} from './profile';
+import {analyse, neighbourAgreement} from '../scripts/profile';
 
 test('analyse counts words, parts of speech, tone, entities and content words', () => {
   const {profile, posOf} = analyse('The happy cat sat on the mat. Elizabeth did not like it. She paid $10 on Monday.\n');

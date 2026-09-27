@@ -81,7 +81,7 @@ function Stat({label, value, note}) {
 }
 
 export default function App() {
-  const [corpus, setCorpus] = useState(CORPORA.includes('trump') ? 'trump' : CORPORA[0]);
+  const [corpus, setCorpus] = useState(''); // none until the user picks one
   const [order, setOrder] = useState('2'); // context words
   const [marcus, setMarcus] = useState(null);
   const [busy, setBusy] = useState(null); // null | a key of BUSY
@@ -92,7 +92,7 @@ export default function App() {
   useEffect(() => {
     let current = true;
     setProfile(null);
-    load('profile', corpus).then((p) => current && setProfile(p));
+    if (corpus) load('profile', corpus).then((p) => current && setProfile(p));
     return () => {
       current = false;
     };
@@ -145,10 +145,11 @@ export default function App() {
           <label className="field">
             <span className="sr-only">Corpus</span>
             <select value={corpus} onChange={change(setCorpus)} disabled={!!busy}>
+              <option value="" disabled>select a corpus</option>
               {CORPORA.map((name) => <option key={name} value={name}>{name}</option>)}
             </select>
           </label>
-          <ViewMenu options={['raw', 'clean', 'profile']} label="view corpus" disabled={!!busy} onSelect={open} />
+          <ViewMenu options={['raw', 'clean', 'profile']} label="view corpus" disabled={!corpus || !!busy} onSelect={open} />
         </section>
 
         <section className="group">
@@ -159,7 +160,7 @@ export default function App() {
               onChange={change(setOrder)} disabled={!!busy} aria-invalid={!validOrder} />
           </label>
           <button className="primary" onClick={() => run('build', async () => setMarcus(buildMarkov(await load('clean', corpus), n)))}
-            disabled={!validOrder || !!busy}>
+            disabled={!corpus || !validOrder || !!busy}>
             <Blocks aria-hidden="true" /> build
           </button>
           <ViewMenu options={['graph', 'table']} disabled={!marcus || !!busy} onSelect={open} />
@@ -171,50 +172,54 @@ export default function App() {
       </aside>
 
       <main className="main">
-        <header className="page-header">
-          <div>
-            <h1>{corpus}</h1>
-            <p className="muted">
-              {marcus ? `Chain built with ${marcus.order} context word${marcus.order > 1 ? 's' : ''}.` : 'Choose a context length and build the chain.'}
-            </p>
-          </div>
-          <p className="status" role="status">
-            {busy && <><span className="spinner" aria-hidden="true" /> {BUSY[busy]}</>}
-          </p>
-        </header>
+        {corpus && (
+          <>
+            <header className="page-header">
+              <div>
+                <h1>{corpus}</h1>
+                <p className="muted">
+                  {marcus ? `Chain built with ${marcus.order} context word${marcus.order > 1 ? 's' : ''}.` : 'Choose a context length and build the chain.'}
+                </p>
+              </div>
+              <p className="status" role="status">
+                {busy && <><span className="spinner" aria-hidden="true" /> {BUSY[busy]}</>}
+              </p>
+            </header>
 
-        {profile && (
-          <div className="stats">
-            <Stat label="Words" value={profile.words.toLocaleString()} note={`${profile.distinctWords.toLocaleString()} distinct`} />
-            <Stat label="Sentences" value={profile.sentences.toLocaleString()} note={`${profile.wordsPerSentence} words each on average`} />
-            <Stat label="Reading ease" value={profile.readability.flesch} note={`Flesch score: ${profile.readability.band}`} />
-            <Stat label="Tone" value={`${profile.sentiment.positivePct}%`} note={`positive sentences, ${profile.sentiment.negativePct}% negative`} />
-          </div>
+            {profile && (
+              <div className="stats">
+                <Stat label="Words" value={profile.words.toLocaleString()} note={`${profile.distinctWords.toLocaleString()} distinct`} />
+                <Stat label="Sentences" value={profile.sentences.toLocaleString()} note={`${profile.wordsPerSentence} words each on average`} />
+                <Stat label="Reading ease" value={profile.readability.flesch} note={`Flesch score: ${profile.readability.band}`} />
+                <Stat label="Tone" value={`${profile.sentiment.positivePct}%`} note={`positive sentences, ${profile.sentiment.negativePct}% negative`} />
+              </div>
+            )}
+
+            <section className="card">
+              <div className="card-header">
+                <div>
+                  <h2>Generated text</h2>
+                  <p className="muted">Each paragraph is five sentences sampled from the chain.</p>
+                </div>
+                <div className="actions">
+                  <button className="primary" onClick={() => setParagraphs([...paragraphs, {text: marcus.generate(), order: marcus.order}])}
+                    disabled={!marcus || !!busy}>
+                    <Sparkles aria-hidden="true" /> generate
+                  </button>
+                  <button onClick={() => setParagraphs([])} disabled={paragraphs.length === 0}>
+                    <Eraser aria-hidden="true" /> clear
+                  </button>
+                </div>
+              </div>
+              <div id="console" className="card-content">
+                {paragraphs.length === 0 && <div className="empty">Nothing generated yet.</div>}
+                {paragraphs.map(({text, order}, i) => (
+                  <p key={i}><span className="badge">n={order}</span> {text}</p>
+                ))}
+              </div>
+            </section>
+          </>
         )}
-
-        <section className="card">
-          <div className="card-header">
-            <div>
-              <h2>Generated text</h2>
-              <p className="muted">Each paragraph is five sentences sampled from the chain.</p>
-            </div>
-            <div className="actions">
-              <button className="primary" onClick={() => setParagraphs([...paragraphs, {text: marcus.generate(), order: marcus.order}])}
-                disabled={!marcus || !!busy}>
-                <Sparkles aria-hidden="true" /> generate
-              </button>
-              <button onClick={() => setParagraphs([])} disabled={paragraphs.length === 0}>
-                <Eraser aria-hidden="true" /> clear
-              </button>
-            </div>
-          </div>
-          <div id="console" className="card-content">
-            {paragraphs.length === 0 && <div className="empty">Nothing generated yet.</div>}
-            {paragraphs.map(({text, order}, i) => (
-              <p key={i}><span className="badge">n={order}</span> {text}</p>
-            ))}
-          </div>
-        </section>
       </main>
 
       {view && (
