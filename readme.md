@@ -23,9 +23,12 @@ Raw source files live in `src/corpus/raw`. Drop any `.txt` file in there to add 
 At build time (and before `npm run dev` / `npm test`), `scripts/prepare-corpora.mjs` turns each raw file into:
 
 - `src/corpus/clean/<name>.txt`: one clean sentence per line (via `src/textprep.js`), which is what the Markov chain reads
-- `src/corpus/profile/<name>.json`: a corpus profile from [wink-nlp](https://github.com/winkjs/wink-nlp) (readability, parts of speech, tone, common words, numbers and dates) plus the word map, with each word's part of speech
+- `src/corpus/profile/<name>.json`: a corpus profile from [wink-nlp](https://github.com/winkjs/wink-nlp) (readability, parts of speech, tone and its arc across the text, common and distinctive words, key sentences, numbers and dates) plus the word map, with each word's part of speech
+- `src/corpus/cache/<name>.json`: build-only content-word counts; distinctive words (BM25) compare every corpus with the others, so they're scored in a final pass over these
 
-Both folders are generated (and git-ignored); a corpus is only re-prepared when its raw file or the preparation code changes. `npm run corpora -- --force` rebuilds everything. In the app, the corpus **view** menu shows the raw text, the clean text and the profile.
+In the app, **analyse** (in the Generated text card) loads wink-nlp on demand and measures the generated text the same way, one column per context length, beside the corpus's own figures.
+
+These folders are generated (and git-ignored); a corpus is only re-prepared when its raw file or the preparation code changes. `npm run corpora -- --force` rebuilds everything. In the app, the corpus **view** menu shows the raw text, the clean text and the profile.
 
 `proverbs.txt` - a long list of common english proverbs
 

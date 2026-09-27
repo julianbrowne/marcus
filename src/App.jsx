@@ -1,9 +1,10 @@
 import {useState} from 'react';
-import {Blocks, Eraser, FlaskConical, Sparkles, Waypoints, X} from 'lucide-react';
+import {Blocks, Eraser, FlaskConical, ScanText, Sparkles, Waypoints, X} from 'lucide-react';
 import {Markov, MAX_ORDER} from './markov';
 import WordMap from './WordMap';
 import ChainTable from './ChainTable';
 import CorpusProfile from './CorpusProfile';
+import TextAnalysis from './TextAnalysis';
 import SegmentedButtons from './SegmentedButtons';
 
 // Corpora are prepared at build time (scripts/prepare-corpora.mjs): raw text, clean text
@@ -31,9 +32,10 @@ const BUSY = {
   build: 'Building chain…',
   graph: 'Loading word map…',
   table: 'Building table…',
+  analysis: 'Analysing generated text…',
 };
 
-const TITLES = {raw: 'Raw text', clean: 'Clean text', profile: 'Profile', graph: 'Word map', table: 'Chain table'};
+const TITLES = {raw: 'Raw text', clean: 'Clean text', profile: 'Profile', graph: 'Word map', table: 'Chain table', analysis: 'Generated text analysis'};
 
 // wait until the browser has painted, so the spinner shows before the main thread blocks
 const nextPaint = () => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve)));
@@ -68,7 +70,18 @@ const views = {
   profile: (profile) => <CorpusProfile profile={profile} />,
   graph: (map) => <WordMap map={map} />,
   table: (rows) => <ChainTable rows={rows} />,
+  analysis: (data) => <TextAnalysis {...data} />,
 };
+
+// analyse generated text with wink-nlp, loaded on first use (~1MB), one group per context length
+async function analyseGenerated(paragraphs) {
+  const {analyse} = await import('./analyse.js');
+  const orders = [...new Set(paragraphs.map((p) => p.order))].sort((a, b) => a - b);
+  return orders.map((order) => {
+    const texts = paragraphs.filter((p) => p.order === order).map((p) => p.text);
+    return {order, paragraphs: texts.length, profile: analyse(texts.join('\n')).profile};
+  });
+}
 
 function Stat({label, value, note}) {
   return (
@@ -131,6 +144,7 @@ export default function App() {
       if (type === 'raw' || type === 'clean' || type === 'profile') data = await load(type, corpus);
       if (type === 'graph') data = (await load('profile', corpus)).map;
       if (type === 'table') data = marcus.topContexts(TOP_WORDS);
+      if (type === 'analysis') data = {corpus: profile, generated: await analyseGenerated(paragraphs)};
       setView({type, data});
     });
   }
@@ -239,6 +253,9 @@ export default function App() {
                       <h2>Generated text</h2>
                       <p className="muted">Each paragraph is five sentences sampled from the chain.</p>
                     </div>
+                    <button onClick={() => open('analysis')} disabled={paragraphs.length === 0 || !profile || !!busy}>
+                      <ScanText aria-hidden="true" /> analyse
+                    </button>
                   </div>
                   <div id="console" className="card-content">
                     {paragraphs.length === 0 && <div className="empty">Nothing generated yet.</div>}

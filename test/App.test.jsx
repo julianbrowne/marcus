@@ -310,6 +310,35 @@ test('profile shows size, readability, parts of speech, tone and common words', 
   expect(text).toMatch(/Flesch reading ease\d+ \(/);
   expect(text).toContain('Elizabeth');
   expect(view.querySelectorAll('.bars tr')).toHaveLength(7);
+  // distinctive words, the tone arc and key sentences, all computed at build time
+  for (const heading of ['Distinctive words', 'Tone across the text', 'Key sentences']) expect(text).toContain(heading);
+  expect(text).toMatch(/Distinctive words[^]*Darcy/);
+  expect(view.querySelectorAll('.tone-arc rect').length).toBeGreaterThan(10);
+  expect(view.querySelector('.tone-arc rect title').textContent).toMatch(/^0–\d+% through: (positive|negative|neutral)/);
+  expect(view.querySelectorAll('.key-sentences li').length).toBeGreaterThan(0);
+});
+
+test('analyse compares generated text with its corpus, one column per context length', async () => {
+  await buildProverbs();
+  expect(button('analyse').disabled).toBe(true); // nothing generated yet
+
+  fireEvent.click(button('generate'));
+  fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: '1'}});
+  fireEvent.click(button('build'));
+  await waitFor(() => expect(button('generate').disabled).toBe(false));
+  fireEvent.click(button('generate'));
+  fireEvent.click(button('generate'));
+
+  fireEvent.click(button('analyse'));
+  const view = await findView('Generated text analysis');
+  const headings = [...view.querySelectorAll('thead th')].map((th) => th.textContent);
+  expect(headings).toEqual(['measure', 'corpus', 'n=1 (2 paras)', 'n=2 (1 para)']);
+  const rows = [...view.querySelectorAll('tbody tr')].map((tr) => [...tr.children].map((c) => c.textContent));
+  expect(rows[0][0]).toBe('Sentences analysed'); // so the sample size is visible
+  expect(rows.map((r) => r[0])).toEqual(expect.arrayContaining(['Words per sentence', 'Reading ease (Flesch)', 'noun', 'Positive sentences']));
+  for (const row of rows) expect(row).toHaveLength(4);
+  const flesch = rows.find((r) => r[0] === 'Reading ease (Flesch)');
+  expect(flesch.slice(1).every((v) => /^-?\d+$/.test(v))).toBe(true);
 });
 
 test('a spinner and status message show while blocking work runs', async () => {

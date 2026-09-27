@@ -1,4 +1,5 @@
 import {posColour} from './pos';
+import ToneArc from './ToneArc';
 
 const num = (n) => n.toLocaleString();
 
@@ -51,6 +52,30 @@ export default function CorpusProfile({profile: p}) {
         </dl>
         <p className="hint">Sentiment is scored from a word list: a guide to overall tone, not a judgement of single sentences.</p>
       </section>
+
+      {p.distinctiveWords?.length > 0 && (
+        <section className="wide">
+          <h3>Distinctive words</h3>
+          <p className="words">{p.distinctiveWords.map((word) => <span key={word}>{word}</span>)}</p>
+          <p className="hint">Words that set this corpus apart from the others (BM25 scoring): its own names, places and subjects.</p>
+        </section>
+      )}
+
+      {p.toneArc?.length > 0 && (
+        <section className="wide">
+          <h3>Tone across the text</h3>
+          <ToneArc arc={p.toneArc} />
+          <p className="hint">Average sentence sentiment in {p.toneArc.length} equal slices, start to finish. For a collection of stories this follows the collection's order, not one plot.</p>
+        </section>
+      )}
+
+      {p.keySentences?.length > 0 && (
+        <section className="wide">
+          <h3>Key sentences</h3>
+          <ol className="key-sentences">{p.keySentences.map((s) => <li key={s}>{s}</li>)}</ol>
+          <p className="hint">The most representative sentences (of 8–40 words): those sharing the most with the rest of the text.</p>
+        </section>
+      )}
 
       <section className="wide">
         <h3>Most common content words</h3>

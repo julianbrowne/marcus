@@ -35,6 +35,11 @@
   --pos-pronoun: #e87ba4;
   --pos-name: #008300;
   --pos-function-word: #4a3aa7;
+
+  /* tone: the diverging blue <-> red pair, grey midpoint */
+  --tone-positive: #2a78d6;
+  --tone-negative: #e34948;
+  --tone-mid: #c9c8c2;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -64,6 +69,10 @@
     --pos-pronoun: #d55181;
     --pos-name: #008300;
     --pos-function-word: #9085e9;
+
+    --tone-positive: #3987e5;
+    --tone-negative: #e66767;
+    --tone-mid: #4a4a46;
   }
 }
 
@@ -771,4 +780,63 @@ input[aria-invalid="true"] {
   border-radius: calc(var(--radius) - 4px);
   background: var(--secondary);
   font-size: 13px;
+}
+
+/* ---------- tone arc ---------- */
+
+.tone-arc {
+  margin: 0;
+}
+
+.tone-arc svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.tone-arc .positive {
+  fill: var(--tone-positive);
+  background: var(--tone-positive);
+}
+
+.tone-arc .negative {
+  fill: var(--tone-negative);
+  background: var(--tone-negative);
+}
+
+.tone-arc .zero {
+  stroke: var(--tone-mid);
+  stroke-width: 1;
+}
+
+.tone-arc figcaption {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.tone-arc .swatch {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.key-sentences {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.key-sentences li {
+  margin-bottom: 6px;
+}
+
+/* ---------- generated text analysis ---------- */
+
+.analysis tbody th {
+  font-weight: 400;
+}
+
+.analysis thead small {
+  font-weight: 400;
 }

@@ -1,8 +1,10 @@
-// Build-time corpus analysis with wink-nlp (runs in Node, never shipped to the browser).
+// Corpus and text analysis with wink-nlp. Runs at build time (scripts/prepare-corpora.mjs) and,
+// lazily loaded, in the browser to analyse generated text.
 
 import winkNLP from 'wink-nlp';
 import model from 'wink-eng-lite-web-model';
-import {POS_GROUPS} from '../src/pos.js';
+import BM25Vectorizer from 'wink-nlp/utilities/bm25-vectorizer.js';
+import {POS_GROUPS} from './pos.js';
 
 const nlp = winkNLP(model);
 const its = nlp.its;
@@ -47,8 +49,9 @@ function chunks(text) {
  * time so memory stays flat on large corpora. With `byLine` (corpora with a
  * sentence per line and no punctuation, e.g. proverbs) each line gets a full
  * stop, otherwise wink reads the whole file as one sentence.
- * Returns {profile, posOf}: profile is plain JSON for the app; posOf maps a
- * normalised word to its most common part-of-speech group.
+ * Returns {profile, posOf, contentWords}: profile is plain JSON for the app;
+ * posOf maps a normalised word to its most common part-of-speech group;
+ * contentWords maps each content word (lemma) to its count, for distinctiveWords().
  */
 export function analyse(prose, byLine = false) {
   if (byLine) prose = prose.split('\n').filter((l) => l.trim()).map((l) => (/[.!?]\s*$/.test(l) ? l : `${l.trimEnd()}.`)).join('\n');
@@ -65,6 +68,8 @@ export function analyse(prose, byLine = false) {
   let readabilityWords = 0;
   let complexWords = 0;
   let readingTimeSecs = 0;
+  const tones = []; // each sentence's sentiment, in order, for the tone arc
+  const keyCandidates = []; // {text, importance} of each chunk's most representative sentences
 
   for (const chunk of chunks(prose)) {
     const doc = nlp.readDoc(chunk);
@@ -96,13 +101,26 @@ export function analyse(prose, byLine = false) {
     });
 
     // wink yields an empty "sentence" after trailing whitespace; skip it
-    doc.sentences().each((sentence) => {
-      if (!sentence.out().trim()) return;
+    const texts = doc.sentences().out();
+    doc.sentences().each((sentence, i) => {
+      if (!texts[i].trim()) return;
       const score = sentence.out(its.sentiment);
       sentences++;
+      tones.push(score);
       if (score > 0) positive++;
       if (score < 0) negative++;
     });
+
+    // ponytail: importance is relative to its chunk, so key sentences are each chunk's best, then the best of those
+    const readable = (text) => {
+      const n = text.split(/\s+/).length;
+      return n >= 8 && n <= 40; // wink favours very long sentences; keep ones a reader can take in
+    };
+    doc.out(its.sentenceWiseImportance)
+      .filter(({index}) => readable(texts[index]))
+      .sort((a, b) => b.importance - a.importance)
+      .slice(0, 3)
+      .forEach(({index, importance}) => keyCandidates.push({text: texts[index].replace(/\s+/g, ' ').trim(), importance}));
 
     for (const {value, type} of doc.entities().out(its.detail)) {
       if (!entities.has(type)) entities.set(type, new Map());
@@ -131,6 +149,8 @@ export function analyse(prose, byLine = false) {
     },
     negatedPer1000: Math.round((1000 * negated) / (words || 1)),
     topWords: [...lemmas].sort((a, b) => b[1] - a[1]).slice(0, 20).map(([word, count]) => ({word, count})),
+    keySentences: keyCandidates.sort((a, b) => b.importance - a.importance).slice(0, 5).map((k) => k.text),
+    toneArc: toneArc(tones),
     entities: [...entities]
       .map(([type, m]) => ({
         type,
@@ -139,7 +159,62 @@ export function analyse(prose, byLine = false) {
       }))
       .sort((a, b) => b.count - a.count),
   };
-  return {profile, posOf};
+  return {profile, posOf, contentWords: lemmas};
+}
+
+/**
+ * Average sentence sentiment across the text, in `segments` equal slices of
+ * sentences from start to finish: the shape of its tone. Values in [-1, 1].
+ */
+export function toneArc(tones, segments = 40) {
+  if (tones.length === 0) return [];
+  const n = Math.min(segments, tones.length);
+  return Array.from({length: n}, (_, i) => {
+    const slice = tones.slice(Math.floor((i * tones.length) / n), Math.floor(((i + 1) * tones.length) / n));
+    return Math.round((1000 * slice.reduce((a, b) => a + b, 0)) / slice.length) / 1000;
+  });
+}
+
+/**
+ * Words that set each corpus apart from the others: BM25 (wink's vectorizer,
+ * the corpora as its documents) over each corpus's content-word counts, so
+ * words common everywhere score low and a corpus's own names and subjects
+ * rise. countsByName: Map(name -> Map(word -> count)).
+ */
+export function distinctiveWords(countsByName, top = 12, minCount = 5) {
+  // one entry per word regardless of case ("Wolf", "wolf", "WOLF"), shown in its most common form
+  const display = new Map(); // lowercase -> Map(form -> count)
+  const merged = new Map([...countsByName].map(([name, counts]) => {
+    const m = new Map();
+    for (const [word, count] of counts) {
+      const key = word.toLowerCase();
+      m.set(key, (m.get(key) || 0) + count);
+      if (!display.has(key)) display.set(key, new Map());
+      display.get(key).set(word, (display.get(key).get(word) || 0) + count);
+    }
+    return [name, m];
+  }));
+  const shown = (key) => [...display.get(key)].sort((a, b) => b[1] - a[1])[0][0];
+  countsByName = merged;
+
+  const names = [...countsByName.keys()];
+  const bm25 = BM25Vectorizer();
+  // ponytail: wink's vectorizer learns token lists; rebuilding them from counts costs one array entry per word used
+  for (const name of names) {
+    const tokens = [];
+    for (const [word, count] of countsByName.get(name)) for (let i = 0; i < count; i++) tokens.push(word);
+    bm25.learn(tokens);
+  }
+  return new Map(names.map((name, i) => {
+    const counts = countsByName.get(name);
+    const weights = bm25.doc(i).out(its.bow);
+    const ranked = Object.entries(weights)
+      .filter(([word]) => counts.get(word) >= minCount) // one-off oddities aren't what sets a corpus apart
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, top)
+      .map(([word]) => shown(word));
+    return [name, ranked];
+  }));
 }
 
 /**

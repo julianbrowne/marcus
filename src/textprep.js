@@ -24,16 +24,27 @@ export function normaliseUnicode(text) {
 }
 
 /**
- * Project Gutenberg eBooks: keep only the text between each
- * "*** START OF ... ***" and "*** END OF ... ***" pair (a file may hold many
- * books), and drop any remaining line that mentions Project Gutenberg (their
- * licence asks for all references to go if the licence text goes).
+ * Project Gutenberg eBooks: keep only the books, i.e. the text between each
+ * "*** START OF ... ***" and "*** END OF ... ***" marker. A file may hold many
+ * books, or be hand-trimmed so a marker is missing: text before a lone END, or
+ * after a lone START, counts as book. Then drop any remaining line that
+ * mentions Project Gutenberg (their licence asks for all references to go if
+ * the licence text goes).
  */
 export function stripGutenberg(text) {
-  const books = [...text.matchAll(/\*{3} ?START OF [^\n]*PROJECT GUTENBERG[^\n]*\n([\s\S]*?)\n[^\n]*\*{3} ?END OF [^\n]*PROJECT GUTENBERG/gi)];
-  if (!books.length) return text;
+  const markers = [...text.matchAll(/^[^\n]*\*{3} ?(START|END) OF [^\n]*PROJECT GUTENBERG[^\n]*$/gim)];
+  if (!markers.length) return text;
+  const books = [];
+  let inBook = markers[0][1].toUpperCase() === 'END'; // header already trimmed away
+  let from = 0;
+  for (const m of markers) {
+    if (inBook) books.push(text.slice(from, m.index));
+    inBook = m[1].toUpperCase() === 'START';
+    from = m.index + m[0].length;
+  }
+  if (inBook) books.push(text.slice(from)); // footer already trimmed away
   return books
-    .map((b) => b[1])
+    .map((b) => b.replace(/^\n+|\n+$/g, ''))
     .join('\n\n')
     .split('\n')
     .filter((line) => !/gutenberg/i.test(line))

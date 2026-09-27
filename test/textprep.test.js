@@ -14,6 +14,11 @@ test('stripGutenberg keeps only the book and drops Project Gutenberg references'
   const ebook = 'The Project Gutenberg eBook of X\nlicence\n*** START OF THE PROJECT GUTENBERG EBOOK X ***\nOnce upon a time.\nSee Project Gutenberg online.\nThe end.\n*** END OF THE PROJECT GUTENBERG EBOOK X ***\nmore licence';
   expect(stripGutenberg(ebook)).toBe('Once upon a time.\nThe end.');
   expect(stripGutenberg('plain text')).toBe('plain text');
+  // hand-trimmed files: header or footer (and its marker) already removed
+  expect(stripGutenberg('Call me Ishmael.\nThe end.\n*** END OF THE PROJECT GUTENBERG EBOOK X ***\nSection 1. licence\n1.F.3 a full refund'))
+    .toBe('Call me Ishmael.\nThe end.');
+  expect(stripGutenberg('licence\n*** START OF THE PROJECT GUTENBERG EBOOK X ***\nCall me Ishmael.\n'))
+    .toBe('Call me Ishmael.');
   const two = `${ebook}\n\n${ebook.replace('Once upon a time.', 'Second book.')}`;
   expect(stripGutenberg(two)).toBe('Once upon a time.\nThe end.\n\nSecond book.\nThe end.');
 });

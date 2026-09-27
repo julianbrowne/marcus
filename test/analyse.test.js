@@ -1,4 +1,4 @@
-import {analyse, neighbourAgreement} from '../scripts/profile';
+import {analyse, neighbourAgreement, toneArc, distinctiveWords} from '../src/analyse';
 
 test('analyse counts words, parts of speech, tone, entities and content words', () => {
   const {profile, posOf} = analyse('The happy cat sat on the mat. Elizabeth did not like it. She paid $10 on Monday.\n');
@@ -39,4 +39,35 @@ test('neighbourAgreement compares neighbours sharing a part of speech with chanc
     ...Array.from({length: 6}, (_, i) => ({word: `v${i}`, x: 10, y: i, pos: 'verb'})),
   ];
   expect(neighbourAgreement(points)).toEqual({neighbours: 5, sharePct: 100, chancePct: 45.5});
+});
+
+test('toneArc averages sentence tone in equal slices from start to finish', () => {
+  expect(toneArc([1, 1, -1, -1], 2)).toEqual([1, -1]);
+  expect(toneArc([0.5, 0.1, 0.3], 40)).toEqual([0.5, 0.1, 0.3]); // never more slices than sentences
+  expect(toneArc([])).toEqual([]);
+});
+
+test('analyse reports key sentences a reader can take in, and the tone arc', () => {
+  const text = 'The fox was happy in the green wood all day long and sang. '.repeat(3) +
+    'Short one. ' + 'The wolf was sad and cold and hungry in the dark wood at night. '.repeat(3);
+  const {profile, contentWords} = analyse(text);
+  expect(profile.keySentences.length).toBeGreaterThan(0);
+  for (const s of profile.keySentences) expect(s.split(' ').length).toBeGreaterThanOrEqual(8);
+  expect(profile.toneArc.length).toBe(profile.sentiment.sentences);
+  expect(profile.toneArc[0]).toBeGreaterThan(0); // happy fox first
+  expect(profile.toneArc.at(-1)).toBeLessThan(0); // sad wolf last
+  expect(contentWords.get('fox')).toBe(3);
+});
+
+test('distinctiveWords picks words that set a corpus apart, merging case', () => {
+  const counts = new Map([
+    ['fables', new Map([['Fox', 30], ['fox', 10], ['day', 50], ['wood', 40]])],
+    ['novel', new Map([['Elizabeth', 40], ['day', 50], ['letter', 30]])],
+    ['sea', new Map([['whale', 60], ['day', 50], ['ship', 20]])],
+  ]);
+  const words = distinctiveWords(counts, 2);
+  expect(words.get('fables')).toEqual(['Fox', 'wood']); // "Fox" + "fox" merged, shown in the commoner form
+  expect(words.get('novel')).toEqual(['Elizabeth', 'letter']);
+  expect(words.get('sea')).toEqual(['whale', 'ship']);
+  for (const list of words.values()) expect(list).not.toContain('day'); // everywhere, so not distinctive
 });
