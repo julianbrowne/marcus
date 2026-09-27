@@ -1,7 +1,7 @@
 
 # Marcus
 
-A Markov Chain explorer.
+Marcus is a Markov Chain explorer.
 
 An order-n Markov chain: each next word is sampled from what followed the last *n* words (the "context words" setting, 1-10) in the source text. Small *n* gives novel but rambling text; large *n* gives fluent text that is increasingly copied verbatim from the source (on Pride and Prejudice, ~0% of sentences at n=2, ~70% at n=4, ~98% at n=6), a small-scale version of an LLM's context window and memorisation.
 
@@ -18,9 +18,14 @@ npm run build   # static build in dist/
 
 ## Source Material
 
-Found in `src/corpus` and picked at runtime. Drop any `.txt` file in there to add your own.
+Raw source files live in `src/corpus/raw`. Drop any `.txt` file in there to add your own.
 
-Every corpus is cleaned at load time by `src/textprep.js` (one sentence per line, typography normalised, quotes/punctuation/stutters removed). Use the **view** button next to the corpus picker to see the cleaned text.
+At build time (and before `npm run dev` / `npm test`), `scripts/prepare-corpora.mjs` turns each raw file into:
+
+- `src/corpus/clean/<name>.txt`: one clean sentence per line (via `src/textprep.js`), which is what the Markov chain reads
+- `src/corpus/profile/<name>.json`: a corpus profile from [wink-nlp](https://github.com/winkjs/wink-nlp) (readability, parts of speech, tone, common words, numbers and dates) plus the word map, with each word's part of speech
+
+Both folders are generated (and git-ignored); a corpus is only re-prepared when its raw file or the preparation code changes. `npm run corpora -- --force` rebuilds everything. In the app, the corpus **view** menu shows the raw text, the clean text and the profile.
 
 `proverbs.txt` - a long list of common english proverbs
 
@@ -36,7 +41,7 @@ General-purpose texts for testing clustering (sources and licences in [`src/corp
 
 `aesop.txt`, `alice.txt`, `pride-and-prejudice.txt`, `sherlock-holmes.txt` - public domain books from Project Gutenberg
 
-`gutenberg.txt` - ~50 MB: 67 popular public domain books from Project Gutenberg in one file. Recreate or resize with `node scripts/fetch-gutenberg.mjs [count]` (it waits 2s between downloads, per Gutenberg's robot policy)
+`gutenberg.txt` - ~50 MB: 67 popular public domain books from Project Gutenberg in one file. Recreate or resize with `node scripts/fetch-gutenberg.mjs [count]` (writes `src/corpus/raw/gutenberg.txt`) (it waits 2s between downloads, per Gutenberg's robot policy)
 
 `tinystories.txt` - ~3 MB of simple-vocabulary children's stories (CDLA-Sharing-1.0)
 

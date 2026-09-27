@@ -98,7 +98,7 @@ test('topContexts lists the most frequent contexts with next-word counts, null f
 
 test('generated text rarely ends on a dangling word (real corpus)', async () => {
   const {clean} = await import('./textprep');
-  const {default: raw} = await import('./corpus/tinystories.txt?raw');
+  const {default: raw} = await import('./corpus/raw/tinystories.txt?raw');
   const m = build(clean(raw), 2, 10);
   const dangling = new Set(['the', 'a', 'an', 'and', 'or', 'to', 'with', 'was']);
   let bad = 0;

@@ -1,6 +1,6 @@
 # Corpus sources
 
-Raw files are kept as downloaded (apart from trimming) and cleaned at load time by `src/textprep.js`.
+Files in `raw/` are kept as downloaded (apart from trimming) and cleaned at build time by `scripts/prepare-corpora.mjs` into `clean/`.
 
 | File | Source | Licence |
 |---|---|---|

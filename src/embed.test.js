@@ -1,6 +1,6 @@
 import {Markov} from './markov';
 import {embed} from './embed';
-import grimm from './corpus/grimm.txt?raw';
+import grimm from './corpus/raw/grimm.txt?raw';
 
 const groups = {
   days: ['monday', 'tuesday', 'friday'],
@@ -58,7 +58,7 @@ test('"and" (preceded by almost everything) is not a lone outlier in a real corp
 
 test('the picture keeps its orientation whatever order the pairs arrive in', async () => {
   const {clean} = await import('./textprep');
-  const {default: raw} = await import('./corpus/pride-and-prejudice.txt?raw');
+  const {default: raw} = await import('./corpus/raw/pride-and-prejudice.txt?raw');
   const pairs = [...pairsFor(clean(raw))];
   // the order the old chain gave: grouped by previous word (this mirrored the y axis)
   const groups = new Map();

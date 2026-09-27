@@ -1,8 +1,7 @@
 import {useEffect, useRef, useState} from 'react';
 
-const OPTIONS = ['graph', 'table'];
-
-export default function ViewMenu({disabled, onSelect}) {
+// a "view ▾" button with a menu of options; `label` names the button for screen readers
+export default function ViewMenu({options, label, disabled, onSelect}) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -21,12 +20,12 @@ export default function ViewMenu({disabled, onSelect}) {
 
   return (
     <div className="dropdown" ref={ref} onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}>
-      <button onClick={() => setOpen(!open)} disabled={disabled} aria-haspopup="menu" aria-expanded={open}>
+      <button onClick={() => setOpen(!open)} disabled={disabled} aria-haspopup="menu" aria-expanded={open} aria-label={label}>
         view <span aria-hidden="true">▾</span>
       </button>
       {open && !disabled && (
         <div className="menu" role="menu">
-          {OPTIONS.map((option) => (
+          {options.map((option) => (
             <button key={option} role="menuitem" onClick={() => choose(option)}>{option}</button>
           ))}
         </div>

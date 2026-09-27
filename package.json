@@ -4,9 +4,13 @@
   "license": "CC-BY-NC-4.0",
   "type": "module",
   "scripts": {
+    "corpora": "node scripts/prepare-corpora.mjs",
+    "predev": "npm run corpora",
     "dev": "vite",
+    "prebuild": "npm run corpora",
     "build": "vite build",
     "preview": "vite preview",
+    "pretest": "npm run corpora",
     "test": "vitest run"
   },
   "dependencies": {
@@ -18,6 +22,8 @@
     "@vitejs/plugin-react": "^6.1.1",
     "jsdom": "^30.1.1",
     "vite": "^8.3.0",
-    "vitest": "^5.0.1"
+    "vitest": "^5.0.1",
+    "wink-eng-lite-web-model": "^1.8.1",
+    "wink-nlp": "^2.4.0"
   }
 }

@@ -194,12 +194,22 @@ export function truecase(sentences) {
 }
 
 /**
+ * The first half of clean(): raw text -> prose with its punctuation and
+ * capitals, minus boilerplate, markup, tokenisation artefacts and labels.
+ * What NLP analysis wants; `byLine` says whether lines are sentences.
+ */
+export function prepare(text) {
+  const prose = stripNonProse(detokenise(stripGutenberg(normaliseUnicode(text))));
+  const byLine = linesAreSentences(prose);
+  return {text: removeLabelLines(prose, !byLine), byLine};
+}
+
+/**
  * Full pipeline: raw text -> one clean sentence per line.
  */
 export function clean(text) {
-  const text2 = stripNonProse(detokenise(stripGutenberg(normaliseUnicode(text))));
-  const byLine = linesAreSentences(text2);
-  const sentences = splitSentences(removeLabelLines(text2, !byLine), byLine)
+  const {text: prepared, byLine} = prepare(text);
+  const sentences = splitSentences(prepared, byLine)
     .map(cleanSentence)
     .filter((s) => /[\p{L}\p{N}]/u.test(s) && !isLabel(s)); // before dropRepeats, so labels can't hide repeats
   // labels filtered after truecasing, which can turn "Sicinius" into "SICINIUS"

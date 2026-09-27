@@ -16,7 +16,7 @@ test('generate is disabled until the chain is built, then appends paragraphs', a
   const {container} = render(<App />);
   expect(button('generate').disabled).toBe(true);
 
-  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: './corpus/proverbs.txt'}});
+  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: 'proverbs'}});
   fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: '2'}});
   fireEvent.click(button('build'));
 
@@ -35,7 +35,7 @@ test('clear removes generated text and badges show the n-grams each was built wi
   const {container} = render(<App />);
   expect(button('clear').disabled).toBe(true);
 
-  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: './corpus/proverbs.txt'}});
+  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: 'proverbs'}});
   fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: '1'}});
   fireEvent.click(button('build'));
   await vi.waitFor(() => expect(button('generate').disabled).toBe(false));
@@ -56,7 +56,7 @@ test('clear removes generated text and badges show the n-grams each was built wi
 
 test('changing settings after a build disables generate again', async () => {
   render(<App />);
-  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: './corpus/proverbs.txt'}});
+  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: 'proverbs'}});
   fireEvent.click(button('build'));
   await vi.waitFor(() => expect(button('generate').disabled).toBe(false));
 
@@ -78,13 +78,13 @@ test.each(['1', '10'])('build is enabled for n-grams "%s"', (value) => {
 
 async function buildProverbs() {
   render(<App />);
-  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: './corpus/proverbs.txt'}});
+  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: 'proverbs'}});
   fireEvent.click(button('build'));
   await vi.waitFor(() => expect(button('view').disabled).toBe(false));
 }
 
-function openView(option) {
-  fireEvent.click(button('view'));
+function openView(option, menu = 'view') {
+  fireEvent.click(button(menu));
   fireEvent.click(screen.getByRole('menuitem', {name: option}));
 }
 
@@ -115,9 +115,21 @@ test('view graph opens a word map; X and Escape close it', async () => {
 
   openView('graph');
   expect(screen.queryByRole('menu')).toBeNull();
-  const dialog = await screen.findByRole('dialog', {name: 'Word map'});
+  const dialog = await screen.findByRole('dialog', {name: 'Word map: proverbs'});
   expect(dialog.querySelectorAll('svg text')).toHaveLength(300);
-  expect(dialog.querySelectorAll('svg circle')).toHaveLength(0);
+  // each word has a marker coloured by its part of speech, with a legend
+  expect(dialog.querySelectorAll('svg circle')).toHaveLength(300);
+  expect(dialog.querySelector('.hint').textContent).toMatch(/share its part of speech \d+(\.\d)?% of the time/);
+  const legend = [...dialog.querySelectorAll('.legend button')];
+  expect(legend.map((b) => b.firstChild.nextSibling.textContent.trim())).toContain('noun');
+
+  // clicking a legend entry highlights that part of speech
+  const noun = legend.find((b) => b.textContent.startsWith('noun'));
+  fireEvent.click(noun);
+  expect(noun.getAttribute('aria-pressed')).toBe('true');
+  const faded = [...dialog.querySelectorAll('svg g')].filter((g) => g.getAttribute('opacity') === '0.15');
+  expect(faded.length).toBeGreaterThan(0);
+  expect(faded.every((g) => !g.querySelector('title').textContent.endsWith(': noun'))).toBe(true);
 
   fireEvent.click(button('close'));
   expect(screen.queryByRole('dialog')).toBeNull();
@@ -131,7 +143,7 @@ test('view table lists words with their links and can be filtered', async () => 
   await buildProverbs();
 
   openView('table');
-  const dialog = await screen.findByRole('dialog', {name: 'Chain table'});
+  const dialog = await screen.findByRole('dialog', {name: 'Chain table: proverbs'});
   expect(dialog.querySelectorAll('tbody')).toHaveLength(300); // proverbs has more distinct words than that
 
   expect(dialog.querySelector('thead').textContent).toBe('contextnext wordcount%');
@@ -150,27 +162,59 @@ test('view table lists words with their links and can be filtered', async () => 
   expect(screen.queryByRole('dialog')).toBeNull();
 });
 
-test('view shows the cleaned corpus text in a popup', async () => {
+test('view corpus offers raw, clean and profile, available before any build', () => {
   render(<App />);
-  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: './corpus/BattleCreekDec19_2019.txt'}});
+  expect(button('view corpus').disabled).toBe(false);
   fireEvent.click(button('view corpus'));
+  expect(screen.getAllByRole('menuitem').map((b) => b.textContent)).toEqual(['raw', 'clean', 'profile']);
+});
 
-  const dialog = await screen.findByRole('dialog', {name: 'Corpus: BattleCreekDec19_2019'});
+test('raw and clean views show the source and the cleaned text', async () => {
+  render(<App />);
+  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: 'BattleCreekDec19_2019'}});
+
+  openView('raw', 'view corpus');
+  let dialog = await screen.findByRole('dialog', {name: 'Raw text: BattleCreekDec19_2019'});
+  expect(dialog.querySelector('pre').textContent.startsWith('Thank you. Thank you. Thank you to Vice President Pence.')).toBe(true);
+  fireEvent.click(button('close'));
+
+  openView('clean', 'view corpus');
+  dialog = await screen.findByRole('dialog', {name: 'Clean text: BattleCreekDec19_2019'});
   const text = dialog.querySelector('pre').textContent;
   expect(text.startsWith('thank you\nthank you to Vice President Pence')).toBe(true);
   expect(text).not.toContain('"');
-
   fireEvent.click(button('close'));
   expect(screen.queryByRole('dialog')).toBeNull();
 });
 
+test('big corpora show only the start of their text', async () => {
+  render(<App />);
+  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: 'tinystories'}});
+  openView('raw', 'view corpus');
+  const dialog = await screen.findByRole('dialog', {name: 'Raw text: tinystories'});
+  expect(dialog.querySelector('pre').textContent).toHaveLength(1_000_000);
+  expect(dialog.querySelector('.hint').textContent).toMatch(/Showing the first 1,000,000 of 3,\d{3},\d{3} characters/);
+});
+
+test('profile shows size, readability, parts of speech, tone and common words', async () => {
+  render(<App />);
+  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: 'pride-and-prejudice'}});
+  openView('profile', 'view corpus');
+  const dialog = await screen.findByRole('dialog', {name: 'Profile: pride-and-prejudice'});
+  const text = dialog.textContent;
+  for (const heading of ['Size', 'Readability', 'Parts of speech', 'Tone', 'Most common content words']) expect(text).toContain(heading);
+  expect(text).toMatch(/Flesch reading ease\d+ \(/);
+  expect(text).toContain('Elizabeth');
+  expect(dialog.querySelectorAll('.bars tr')).toHaveLength(7);
+});
+
 test('a spinner and status message show while blocking work runs', async () => {
   render(<App />);
-  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: './corpus/proverbs.txt'}});
+  fireEvent.change(screen.getByLabelText('Corpus'), {target: {value: 'proverbs'}});
   fireEvent.click(button('build'));
 
   const status = screen.getByRole('status');
-  expect(status.textContent).toContain('building chain');
+  expect(status.textContent).toContain('Building chain');
   expect(status.querySelector('.spinner')).not.toBeNull();
   expect(button('build').disabled).toBe(true);
   expect(button('view corpus').disabled).toBe(true);
@@ -180,7 +224,7 @@ test('a spinner and status message show while blocking work runs', async () => {
   expect(status.querySelector('.spinner')).toBeNull();
 
   openView('graph');
-  expect(status.textContent).toContain('Drawing word map');
-  await screen.findByRole('dialog', {name: 'Word map'});
+  expect(status.textContent).toContain('Loading word map');
+  await screen.findByRole('dialog', {name: 'Word map: proverbs'});
   expect(status.textContent).toBe('');
 });
