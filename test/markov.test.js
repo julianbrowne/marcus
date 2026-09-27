@@ -82,6 +82,15 @@ test('generate capitalises and joins minSentences sentences', () => {
   for (const s of sentences) expect(s).toMatch(/^The (cat sat|dog ran)$/);
 });
 
+test('generate keeps the space after a one-letter first word', () => {
+  const m = build('I grieve to find it\na cat sat', 1, 2); // cap 3x2 = 6 words fits both sentences
+  m.setMinSentences(20);
+  const sentences = m.generate().split('. ').filter(Boolean);
+  expect(sentences.some((s) => s.startsWith('I grieve'))).toBe(true);
+  expect(sentences.some((s) => s.startsWith('A cat'))).toBe(true);
+  for (const s of sentences) expect(s).toMatch(/^(I grieve to find it|A cat sat)$/);
+});
+
 test('pairs yields adjacent words within sentences only', () => {
   expect([...build('a b c\nd e').pairs()]).toEqual([['a', 'b'], ['b', 'c'], ['d', 'e']]);
 });

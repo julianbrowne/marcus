@@ -121,8 +121,8 @@ export class Markov {
   generate() {
     let paragraph = '';
     for (let i = 0; i < this.minSentences; i++) {
-      const s = this.sentence();
-      if (s !== '') paragraph += s.charAt(0).toUpperCase() + s.slice(1).trim() + '. ';
+      const s = this.sentence().trim(); // trim before capitalising, or "I grieve" becomes "Igrieve"
+      if (s !== '') paragraph += s.charAt(0).toUpperCase() + s.slice(1) + '. ';
     }
     return paragraph;
   }
