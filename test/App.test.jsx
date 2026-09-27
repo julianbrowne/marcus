@@ -36,6 +36,25 @@ test('starts with no corpus selected, a blank main pane and nothing to build or 
   expect(parts('view corpus').every((b) => !b.disabled)).toBe(true);
 });
 
+test('the call to action moves from build (once a corpus is chosen) to generate (once built)', async () => {
+  render(<App />);
+  const isCta = (name) => button(name).classList.contains('cta');
+  // nothing chosen: every button disabled, none styled as the call to action's enabled look
+  expect([...document.querySelectorAll('.sidebar button')].every((b) => b.disabled)).toBe(true);
+
+  await selectCorpus('proverbs');
+  expect(isCta('build')).toBe(true);
+  expect(isCta('generate')).toBe(false);
+  expect(parts('view corpus').every((b) => !b.disabled)).toBe(true);
+  expect(parts('view chain').every((b) => b.disabled)).toBe(true);
+
+  fireEvent.click(button('build'));
+  await vi.waitFor(() => expect(button('generate').disabled).toBe(false));
+  expect(isCta('build')).toBe(false);
+  expect(isCta('generate')).toBe(true);
+  expect(parts('view chain').every((b) => !b.disabled)).toBe(true);
+});
+
 test('the sidebar has corpus and chain sections, divided, with generate and clear in the chain section', () => {
   const {container} = render(<App />);
   const [corpusSection, chainSection] = container.querySelectorAll('.sidebar .group');

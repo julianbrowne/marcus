@@ -21,6 +21,9 @@
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --sidebar: oklch(0.985 0 0);
+  /* the call to action (build, then generate): shadcn's blue theme primary, as in the reference design */
+  --cta: oklch(0.488 0.243 264.376);
+  --cta-foreground: oklch(0.985 0 0);
   --overlay: rgb(0 0 0 / 0.5);
   --shadow: 0 1px 3px rgb(0 0 0 / 0.08), 0 1px 2px rgb(0 0 0 / 0.04);
 
@@ -366,8 +369,25 @@ button.primary:hover:not(:disabled) {
   opacity: 0.9;
 }
 
-button:disabled {
-  opacity: 0.5;
+button.cta {
+  border-color: var(--cta);
+  background: var(--cta);
+  color: var(--cta-foreground);
+}
+
+button.cta:hover:not(:disabled) {
+  background: var(--cta);
+  opacity: 0.9;
+}
+
+/* every disabled button looks the same, whatever it becomes when enabled */
+button:disabled,
+button.primary:disabled,
+button.cta:disabled {
+  border-color: var(--border);
+  background: var(--muted);
+  color: var(--muted-foreground);
+  box-shadow: none;
   cursor: default;
 }
 
@@ -564,7 +584,7 @@ input[aria-invalid="true"] {
 
 .scroll svg {
   display: block;
-  font-size: 11px;
+  font-size: 22px;
 }
 
 .scroll svg text {

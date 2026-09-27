@@ -171,14 +171,14 @@ export default function App() {
             <input type="number" min="1" max={MAX_ORDER} step="1" value={order}
               onChange={chooseOrder} disabled={!!busy} aria-invalid={!validOrder} />
           </label>
-          <button className="primary" onClick={() => run('build', async () => setMarcus(buildMarkov(await load('clean', corpus), n)))}
+          <button className={marcus ? '' : 'cta'} onClick={() => run('build', async () => setMarcus(buildMarkov(await load('clean', corpus), n)))}
             disabled={!corpus || !validOrder || !!busy}>
             <Blocks aria-hidden="true" /> build
           </button>
           <SegmentedButtons label="view chain" options={['graph', 'table']} active={view?.type}
             disabled={!marcus || !!busy} onSelect={toggle} />
           <div className="button-row">
-            <button onClick={generate} disabled={!marcus || !!busy}>
+            <button className={marcus ? 'cta' : ''} onClick={generate} disabled={!marcus || !!busy}>
               <Sparkles aria-hidden="true" /> generate
             </button>
             <button onClick={() => setParagraphs([])} disabled={paragraphs.length === 0}>
