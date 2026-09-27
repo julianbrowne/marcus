@@ -1,11 +1,10 @@
 import {useEffect, useState} from 'react';
-import {Blocks, Eraser, FlaskConical, Sparkles, Waypoints} from 'lucide-react';
+import {Blocks, Eraser, FlaskConical, Sparkles, Waypoints, X} from 'lucide-react';
 import {Markov, MAX_ORDER} from './markov';
-import Modal from './Modal';
 import WordMap from './WordMap';
 import ChainTable from './ChainTable';
 import CorpusProfile from './CorpusProfile';
-import ViewMenu from './ViewMenu';
+import SegmentedButtons from './SegmentedButtons';
 
 // Corpora are prepared at build time (scripts/prepare-corpora.mjs): raw text, clean text
 // and a profile per corpus, each lazy-loaded on first use and keyed by path.
@@ -86,7 +85,7 @@ export default function App() {
   const [marcus, setMarcus] = useState(null);
   const [busy, setBusy] = useState(null); // null | a key of BUSY
   const [paragraphs, setParagraphs] = useState([]);
-  const [view, setView] = useState(null); // null | {type: a key of views, data} for the open popup
+  const [view, setView] = useState(null); // null (generated text) | {type: a key of views, data} shown in the main pane
   const [profile, setProfile] = useState(null); // headline figures for the selected corpus
 
   useEffect(() => {
@@ -101,12 +100,17 @@ export default function App() {
   const n = Number(order);
   const validOrder = Number.isInteger(n) && n >= 1 && n <= MAX_ORDER;
 
-  // any settings change invalidates the built chain
-  function change(setter) {
-    return (e) => {
-      setter(e.target.value);
-      setMarcus(null);
-    };
+  // any settings change invalidates the built chain, and any view showing the old data
+  function chooseCorpus(e) {
+    setCorpus(e.target.value);
+    setMarcus(null);
+    setView(null);
+  }
+
+  function chooseOrder(e) {
+    setOrder(e.target.value);
+    setMarcus(null);
+    setView((v) => (v?.type === 'table' ? null : v)); // the table shows the chain's contexts
   }
 
   async function run(kind, work) {
@@ -119,6 +123,12 @@ export default function App() {
     }
   }
 
+  // clicking the open view's button again goes back to the generated text
+  function toggle(type) {
+    if (view?.type === type) setView(null);
+    else open(type);
+  }
+
   function open(type) {
     run(type, async () => {
       let data;
@@ -127,6 +137,11 @@ export default function App() {
       if (type === 'table') data = marcus.topContexts(TOP_WORDS);
       setView({type, data});
     });
+  }
+
+  function generate() {
+    setParagraphs([...paragraphs, {text: marcus.generate(), order: marcus.order}]);
+    setView(null); // show it
   }
 
   return (
@@ -144,26 +159,36 @@ export default function App() {
           <h2 className="group-label">Corpus</h2>
           <label className="field">
             <span className="sr-only">Corpus</span>
-            <select value={corpus} onChange={change(setCorpus)} disabled={!!busy}>
+            <select value={corpus} onChange={chooseCorpus} disabled={!!busy}>
               <option value="" disabled>select a corpus</option>
               {CORPORA.map((name) => <option key={name} value={name}>{name}</option>)}
             </select>
           </label>
-          <ViewMenu options={['raw', 'clean', 'profile']} label="view corpus" disabled={!corpus || !!busy} onSelect={open} />
+          <SegmentedButtons label="view corpus" options={['raw', 'clean', 'profile']} active={view?.type}
+            disabled={!corpus || !!busy} onSelect={toggle} />
         </section>
 
-        <section className="group">
+        <section className="group divided">
           <h2 className="group-label">Chain</h2>
           <label className="field">
             Context words (n)
             <input type="number" min="1" max={MAX_ORDER} step="1" value={order}
-              onChange={change(setOrder)} disabled={!!busy} aria-invalid={!validOrder} />
+              onChange={chooseOrder} disabled={!!busy} aria-invalid={!validOrder} />
           </label>
           <button className="primary" onClick={() => run('build', async () => setMarcus(buildMarkov(await load('clean', corpus), n)))}
             disabled={!corpus || !validOrder || !!busy}>
             <Blocks aria-hidden="true" /> build
           </button>
-          <ViewMenu options={['graph', 'table']} disabled={!marcus || !!busy} onSelect={open} />
+          <div className="button-row">
+            <button onClick={generate} disabled={!marcus || !!busy}>
+              <Sparkles aria-hidden="true" /> generate
+            </button>
+            <button onClick={() => setParagraphs([])} disabled={paragraphs.length === 0}>
+              <Eraser aria-hidden="true" /> clear
+            </button>
+          </div>
+          <SegmentedButtons label="view chain" options={['graph', 'table']} active={view?.type}
+            disabled={!marcus || !!busy} onSelect={toggle} />
         </section>
 
         <footer className="sidebar-footer">
@@ -191,47 +216,46 @@ export default function App() {
               </p>
             </header>
 
-            {profile && (
-              <div className="stats">
-                <Stat label="Words" value={profile.words.toLocaleString()} note={`${profile.distinctWords.toLocaleString()} distinct`} />
-                <Stat label="Sentences" value={profile.sentences.toLocaleString()} note={`${profile.wordsPerSentence} words each on average`} />
-                <Stat label="Reading ease" value={profile.readability.flesch} note={`Flesch score: ${profile.readability.band}`} />
-                <Stat label="Tone" value={`${profile.sentiment.positivePct}%`} note={`positive sentences, ${profile.sentiment.negativePct}% negative`} />
-              </div>
-            )}
+            {view ? (
+              <section className="panel" aria-label={TITLES[view.type]}>
+                <div className="panel-header">
+                  <h2>{TITLES[view.type]}</h2>
+                  <button className="close" aria-label="close" title="Back to generated text" onClick={() => setView(null)}>
+                    <X aria-hidden="true" />
+                  </button>
+                </div>
+                {views[view.type](view.data)}
+              </section>
+            ) : (
+              <>
+                {profile && (
+                  <div className="stats">
+                    <Stat label="Words" value={profile.words.toLocaleString()} note={`${profile.distinctWords.toLocaleString()} distinct`} />
+                    <Stat label="Sentences" value={profile.sentences.toLocaleString()} note={`${profile.wordsPerSentence} words each on average`} />
+                    <Stat label="Reading ease" value={profile.readability.flesch} note={`Flesch score: ${profile.readability.band}`} />
+                    <Stat label="Tone" value={`${profile.sentiment.positivePct}%`} note={`positive sentences, ${profile.sentiment.negativePct}% negative`} />
+                  </div>
+                )}
 
-            <section className="card">
-              <div className="card-header">
-                <div>
-                  <h2>Generated text</h2>
-                  <p className="muted">Each paragraph is five sentences sampled from the chain.</p>
-                </div>
-                <div className="actions">
-                  <button className="primary" onClick={() => setParagraphs([...paragraphs, {text: marcus.generate(), order: marcus.order}])}
-                    disabled={!marcus || !!busy}>
-                    <Sparkles aria-hidden="true" /> generate
-                  </button>
-                  <button onClick={() => setParagraphs([])} disabled={paragraphs.length === 0}>
-                    <Eraser aria-hidden="true" /> clear
-                  </button>
-                </div>
-              </div>
-              <div id="console" className="card-content">
-                {paragraphs.length === 0 && <div className="empty">Nothing generated yet.</div>}
-                {paragraphs.map(({text, order}, i) => (
-                  <p key={i}><span className="badge">n={order}</span> {text}</p>
-                ))}
-              </div>
-            </section>
+                <section className="card">
+                  <div className="card-header">
+                    <div>
+                      <h2>Generated text</h2>
+                      <p className="muted">Each paragraph is five sentences sampled from the chain.</p>
+                    </div>
+                  </div>
+                  <div id="console" className="card-content">
+                    {paragraphs.length === 0 && <div className="empty">Nothing generated yet.</div>}
+                    {paragraphs.map(({text, order}, i) => (
+                      <p key={i}><span className="badge">n={order}</span> {text}</p>
+                    ))}
+                  </div>
+                </section>
+              </>
+            )}
           </>
         )}
       </main>
-
-      {view && (
-        <Modal title={`${TITLES[view.type]}: ${corpus}`} onClose={() => setView(null)}>
-          {views[view.type](view.data)}
-        </Modal>
-      )}
     </div>
   );
 }
