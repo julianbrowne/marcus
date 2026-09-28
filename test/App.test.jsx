@@ -200,6 +200,18 @@ test('graph shows the word map in the main pane; X goes back to the generated te
   const legend = [...view.querySelectorAll('.legend button')];
   expect(legend.map((b) => b.firstChild.nextSibling.textContent.trim())).toContain('noun');
 
+  // every word sits clear of the canvas edges, with room for its label on the right
+  const svg = view.querySelector('.scroll svg');
+  const [width, height] = [Number(svg.getAttribute('width')), Number(svg.getAttribute('height'))];
+  for (const g of view.querySelectorAll('svg g')) {
+    const [x, y] = g.getAttribute('transform').match(/[\d.]+/g).map(Number);
+    const word = g.querySelector('text').textContent;
+    expect(x).toBeGreaterThanOrEqual(24 + 7); // margin + dot
+    expect(y).toBeGreaterThanOrEqual(24 + 11); // margin + half a line
+    expect(y).toBeLessThanOrEqual(height - 24 - 11);
+    expect(x + 12 + word.length * 22 * 0.65).toBeLessThanOrEqual(width - 24 + 0.001); // label fits
+  }
+
   // clicking a legend entry highlights that part of speech
   const noun = legend.find((b) => b.textContent.startsWith('noun'));
   fireEvent.click(noun);
