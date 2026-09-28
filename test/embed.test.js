@@ -68,7 +68,7 @@ test('the picture keeps its orientation whatever order the pairs arrive in', asy
     [...groups.values()].flat(), // the order the old chain gave, which once mirrored the map
     [...pairs].sort((a, b) => (a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0)),
   ];
-  const maps = orders.map((o) => embed(o, {rows: 300})); // as the app uses it
+  const maps = orders.map((o) => embed(o, {rows: 300})); // 300 words is where grimm flips without the rule
   const reference = new Map(maps[0].map((p) => [p.word, p]));
   for (const points of maps) {
     // the rule: each axis points so the most frequent word is on the positive side

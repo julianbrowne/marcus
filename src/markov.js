@@ -178,6 +178,35 @@ export class Markov {
     }
   }
 
+  /**
+   * What can follow these words in the chain: the next words seen after the
+   * same context (their last `order` words), most frequent first, with null
+   * for "the sentence ended here". With `atStart` the words began a sentence,
+   * so while they're shorter than the context the sentence start counts too;
+   * otherwise they're a run from anywhere in a sentence.
+   * {context: [words the choice depends on], total, options: [{word, count}]}
+  **/
+  followers(words, atStart = true) {
+    const ids = words.map((w) => this.ids.get(w));
+    const none = {context: [], total: 0, options: []};
+    if (ids.includes(undefined) || (!atStart && ids.length === 0)) return none;
+    const context = atStart ? this.contextFor(ids) : ids.slice(-this.order);
+    const {start, end} = this.block(context);
+    if (end <= start) return none;
+    const counts = new Map();
+    for (let i = start; i < end; i++) {
+      const next = this.tokens[this.suffixes[i] + context.length];
+      counts.set(next, (counts.get(next) || 0) + 1);
+    }
+    return {
+      context: context.filter((id) => id !== BOUNDARY).map((id) => this.words[id]),
+      total: end - start,
+      options: [...counts]
+        .map(([id, count]) => ({word: id === BOUNDARY ? null : this.words[id], count}))
+        .sort((a, b) => b.count - a.count),
+    };
+  }
+
   // [previous word, word] for every adjacent pair within a sentence
   * pairs() {
     const t = this.tokens;

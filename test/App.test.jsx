@@ -71,9 +71,9 @@ test('the sidebar has corpus and chain sections, divided, with generate and clea
   expect(chainSection.querySelector('.group-label').textContent).toBe('Chain');
   expect(chainSection.classList.contains('divided')).toBe(true);
   const chainButtons = [...chainSection.querySelectorAll('button')].map((b) => b.textContent.trim());
-  expect(chainButtons).toEqual(['build', 'graph', 'table', 'generate', 'clear']);
+  expect(chainButtons).toEqual(['build', 'graph', 'table', 'navigate', 'generate', 'clear']);
   expect(parts('view corpus').map((b) => b.textContent)).toEqual(['raw', 'clean', 'profile']);
-  expect(parts('view chain').map((b) => b.textContent)).toEqual(['graph', 'table']);
+  expect(parts('view chain').map((b) => b.textContent)).toEqual(['graph', 'table', 'navigate']);
 });
 
 test('lists every corpus in the selector', () => {
@@ -193,9 +193,9 @@ test('graph shows the word map in the main pane; X goes back to the generated te
   const view = await findView('Word map');
   expect(view.closest('main')).not.toBeNull();
   expect(view.querySelector('.scroll svg')).not.toBeNull(); // scrolls within the pane
-  expect(view.querySelectorAll('svg text')).toHaveLength(300);
+  expect(view.querySelectorAll('svg text')).toHaveLength(500);
   // each word has a marker coloured by its part of speech, with a legend
-  expect(view.querySelectorAll('svg circle')).toHaveLength(300);
+  expect(view.querySelectorAll('svg circle')).toHaveLength(500);
   expect(view.querySelector('.hint').textContent).toMatch(/share its part of speech \d+(\.\d)?% of the time/);
   const legend = [...view.querySelectorAll('.legend button')];
   expect(legend.map((b) => b.firstChild.nextSibling.textContent.trim())).toContain('noun');
@@ -230,7 +230,7 @@ test('table lists contexts with their next words and can be filtered', async () 
 
   openView('table');
   const view = await findView('Chain table');
-  expect(view.querySelectorAll('tbody')).toHaveLength(300); // proverbs has more distinct contexts than that
+  expect(view.querySelectorAll('tbody')).toHaveLength(500); // proverbs has more distinct contexts than that
 
   expect(view.querySelector('thead').textContent).toBe('contextnext wordcount%');
   fireEvent.change(screen.getByLabelText('filter contexts'), {target: {value: 'th'}});
@@ -404,4 +404,49 @@ test('the sidebar links to the test report, above the source link', () => {
   expect(links.map((a) => a.textContent.trim())).toEqual(['Test report', 'Source on GitHub']);
   expect(links[0].getAttribute('href')).toBe('./tests/index.html'); // relative, so it works under /marcus/ on Pages
   expect(links[0].getAttribute('target')).toBe('_blank');
+});
+
+test('navigate walks the chain by hand from a start word to the end of a sentence', async () => {
+  await buildProverbs(); // n = 2
+  openView('navigate');
+  const view = await findView('Navigate the chain');
+  const chips = () => [...view.querySelectorAll('.chips-area .chip')];
+
+  // start: sentence starters, filtered by what's typed
+  expect(chips().length).toBeGreaterThan(50);
+  fireEvent.change(screen.getByLabelText('starting words'), {target: {value: 'wh'}});
+  expect(chips().every((c) => c.textContent.toLowerCase().startsWith('wh'))).toBe(true);
+  fireEvent.change(screen.getByLabelText('starting words'), {target: {value: 'a'}});
+  fireEvent.click(chips().find((c) => c.textContent.startsWith('a ')));
+
+  // then: words that followed the context, each with its share
+  const sentence = () => screen.getByLabelText('sentence so far');
+  expect(sentence().textContent).toBe('a');
+  expect(chips().length).toBeGreaterThan(1);
+  expect(chips().every((c) => /\d+(\.\d)?%$/.test(c.textContent))).toBe(true);
+
+  // keep taking the first option; the last n words are highlighted as the context
+  for (let i = 0; i < 40 && !view.querySelector('.chip.end'); i++) fireEvent.click(chips()[0]);
+  expect(view.querySelector('.chip.end')).not.toBeNull();
+  const words = sentence().textContent.split(' ');
+  expect(sentence().querySelectorAll('.context')).toHaveLength(Math.min(2, words.length));
+  expect([...sentence().querySelectorAll('.context')].map((c) => c.textContent)).toEqual(words.slice(-2));
+
+  const before = sentence().textContent;
+  fireEvent.click(button('back'));
+  expect(sentence().textContent.length).toBeLessThan(before.length);
+  fireEvent.click(chips()[0]);
+
+  // end of sentence finishes it
+  for (let i = 0; i < 40 && !view.querySelector('.chip.end'); i++) fireEvent.click(chips()[0]);
+  fireEvent.click(view.querySelector('.chip.end'));
+  expect(sentence().textContent.endsWith('.')).toBe(true);
+  expect(view.textContent).toContain('The sentence ends here');
+
+  // start again, this time from typed words mid-sentence
+  fireEvent.click(button('start again'));
+  fireEvent.change(screen.getByLabelText('starting words'), {target: {value: 'the early'}});
+  fireEvent.click(view.querySelector('.chip.phrase'));
+  expect(sentence().textContent).toBe('the early');
+  expect(chips().map((c) => c.textContent)).toContain('bird 100%'); // the early bird catches the worm
 });

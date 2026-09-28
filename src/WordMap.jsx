@@ -1,7 +1,7 @@
 import {useLayoutEffect, useRef, useState} from 'react';
 import {POS_GROUPS, posColour} from './pos';
 
-const ZOOM = 5; // spread points out; labels stay the same size (22px, see index.css)
+const ZOOM = 6.5; // spread points out (500 words); labels stay the same size (22px, see index.css)
 const W = 800 * ZOOM;
 const H = 600 * ZOOM;
 const DOT = 7; // marker radius

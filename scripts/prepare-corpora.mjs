@@ -17,7 +17,7 @@ import {Markov} from '../src/markov.js';
 import {embed} from '../src/embed.js';
 import {analyse, neighbourAgreement, distinctiveWords} from '../src/analyse.js';
 
-const MAP_WORDS = 300; // words on the word map
+const MAP_WORDS = 500; // words on the word map
 const dir = (name) => new URL(`../src/corpus/${name}/`, import.meta.url);
 const RAW = dir('raw');
 const CLEAN = dir('clean');

@@ -5,6 +5,7 @@ import WordMap from './WordMap';
 import ChainTable from './ChainTable';
 import CorpusProfile from './CorpusProfile';
 import TextAnalysis from './TextAnalysis';
+import Navigator from './Navigator';
 import SegmentedButtons from './SegmentedButtons';
 
 // Corpora are prepared at build time (scripts/prepare-corpora.mjs): raw text, clean text
@@ -18,7 +19,7 @@ const load = (kind, name) => files[kind][`./corpus/${kind}/${name}.${kind === 'p
 const CORPORA = Object.keys(files.clean).map((path) => path.replace(/^.*\/|\.txt$/g, ''));
 
 // the table only models the most frequent contexts
-const TOP_WORDS = 300;
+const TOP_WORDS = 500;
 
 // ponytail: text views show the start of big corpora; a 50MB <pre> can hang the tab
 const MAX_VIEW_CHARS = 1_000_000;
@@ -33,9 +34,10 @@ const BUSY = {
   graph: 'Loading word map…',
   table: 'Building table…',
   analysis: 'Analysing generated text…',
+  navigate: 'Opening the chain…',
 };
 
-const TITLES = {raw: 'Raw text', clean: 'Clean text', profile: 'Profile', graph: 'Word map', table: 'Chain table', analysis: 'Generated text analysis'};
+const TITLES = {raw: 'Raw text', clean: 'Clean text', profile: 'Profile', graph: 'Word map', table: 'Chain table', analysis: 'Generated text analysis', navigate: 'Navigate the chain'};
 
 // wait until the browser has painted, so the spinner shows before the main thread blocks
 const nextPaint = () => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve)));
@@ -71,6 +73,7 @@ const views = {
   graph: (map) => <WordMap map={map} />,
   table: (rows) => <ChainTable rows={rows} />,
   analysis: (data) => <TextAnalysis {...data} />,
+  navigate: (marcus) => <Navigator key={marcus.order} marcus={marcus} />,
 };
 
 // analyse generated text with wink-nlp, loaded on first use (~1MB), one group per context length
@@ -119,7 +122,7 @@ export default function App() {
   function chooseOrder(e) {
     setOrder(e.target.value);
     setMarcus(null);
-    setView((v) => (v?.type === 'table' ? null : v)); // the table shows the chain's contexts
+    setView((v) => (v?.type === 'table' || v?.type === 'navigate' ? null : v)); // these show the chain itself
   }
 
   async function run(kind, work) {
@@ -144,6 +147,7 @@ export default function App() {
       if (type === 'raw' || type === 'clean' || type === 'profile') data = await load(type, corpus);
       if (type === 'graph') data = (await load('profile', corpus)).map;
       if (type === 'table') data = marcus.topContexts(TOP_WORDS);
+      if (type === 'navigate') data = marcus;
       if (type === 'analysis') data = {corpus: profile, generated: await analyseGenerated(paragraphs)};
       setView({type, data});
     });
@@ -189,7 +193,7 @@ export default function App() {
             disabled={!corpus || !validOrder || !!busy}>
             <Blocks aria-hidden="true" /> build
           </button>
-          <SegmentedButtons label="view chain" options={['graph', 'table']} active={view?.type}
+          <SegmentedButtons label="view chain" options={['graph', 'table', 'navigate']} active={view?.type}
             disabled={!marcus || !!busy} onSelect={toggle} />
           <div className="button-row">
             <button className={marcus ? 'cta' : ''} onClick={generate} disabled={!marcus || !!busy}>

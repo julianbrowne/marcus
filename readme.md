@@ -26,6 +26,8 @@ At build time (and before `npm run dev` / `npm test`), `scripts/prepare-corpora.
 - `src/corpus/profile/<name>.json`: a corpus profile from [wink-nlp](https://github.com/winkjs/wink-nlp) (readability, parts of speech, tone and its arc across the text, common and distinctive words, key sentences, numbers and dates) plus the word map, with each word's part of speech
 - `src/corpus/cache/<name>.json`: build-only content-word counts; distinctive words (BM25) compare every corpus with the others, so they're scored in a final pass over these
 
+In the app, **navigate** (next to graph and table) walks the chain by hand: pick a sentence starter, or type words to start mid-sentence, then pick each next word from those that followed the same context in the corpus, with the context words highlighted, until the sentence ends.
+
 In the app, **analyse** (in the Generated text card) loads wink-nlp on demand and measures the generated text the same way, one column per context length, beside the corpus's own figures.
 
 These folders are generated (and git-ignored); a corpus is only re-prepared when its raw file or the preparation code changes. `npm run corpora -- --force` rebuilds everything. In the app, the corpus **view** menu shows the raw text, the clean text and the profile.

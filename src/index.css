@@ -840,3 +840,70 @@ input[aria-invalid="true"] {
 .analysis thead small {
   font-weight: 400;
 }
+
+/* ---------- navigate ---------- */
+
+.nav-input {
+  max-width: 420px;
+  margin-bottom: 12px;
+}
+
+.chips-area {
+  padding: 12px 16px;
+}
+
+.chips-label {
+  margin: 0 0 8px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.chip {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  gap: 6px;
+}
+
+.chip small {
+  color: var(--muted-foreground);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip.end {
+  border-style: dashed;
+}
+
+.chip.phrase {
+  border-color: var(--cta);
+  color: var(--cta);
+}
+
+.sentence {
+  margin: 4px 0 12px;
+  font-size: 22px;
+  line-height: 1.6;
+}
+
+.sentence .context,
+.chips-label .context {
+  border-radius: 4px;
+  background: color-mix(in oklch, var(--cta) 15%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--cta) 15%, transparent);
+}
+
+.nav-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
