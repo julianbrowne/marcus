@@ -1,4 +1,4 @@
-import {useLayoutEffect, useRef, useState} from 'react';
+import {useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {POS_GROUPS, posColour} from './pos';
 
 const ZOOM = 6.5; // spread points out (500 words); labels stay the same size (22px, see index.css)
@@ -18,7 +18,7 @@ function scale(values, size, before, after) {
   return (v) => before + ((v - min) / range) * (size - before - after);
 }
 
-export const edges = (points) => ({
+const edges = (points) => ({
   left: MARGIN + DOT,
   right: MARGIN + LABEL_X + Math.max(...points.map((p) => labelWidth(p.word))),
   top: MARGIN + 11, // half the 22px line
@@ -29,9 +29,10 @@ export const edges = (points) => ({
 export default function WordMap({map}) {
   const {points, agreement} = map;
   const [focus, setFocus] = useState(null); // highlighted part of speech
-  const {left, right, top, bottom} = edges(points);
-  const sx = scale(points.map((p) => p.x), W, left, right);
-  const sy = scale(points.map((p) => p.y), H, top, bottom);
+  const {sx, sy} = useMemo(() => {
+    const {left, right, top, bottom} = edges(points);
+    return {sx: scale(points.map((p) => p.x), W, left, right), sy: scale(points.map((p) => p.y), H, top, bottom)};
+  }, [points]);
 
   // the canvas is several screens wide: open centred on the middle of the words, not the empty corner
   const scroller = useRef(null);
@@ -40,7 +41,7 @@ export default function WordMap({map}) {
     const mid = (values) => values.reduce((a, b) => a + b, 0) / values.length;
     el.scrollLeft = mid(points.map((p) => sx(p.x))) - el.clientWidth / 2;
     el.scrollTop = mid(points.map((p) => sy(p.y))) - el.clientHeight / 2;
-  }, [points]); // sx, sy derive from points
+  }, [points, sx, sy]);
   const counts = Object.fromEntries(Object.keys(POS_GROUPS).map((pos) => [pos, points.filter((p) => p.pos === pos).length]));
 
   return (

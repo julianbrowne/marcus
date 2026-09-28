@@ -18,7 +18,7 @@ export function normaliseUnicode(text) {
     .replace(/[“”„‟″]/g, '"')
     .replace(/[‐‑]/g, '-') // unicode hyphens
     .replace(/\s*(?:[‒-―]|--+)\s*/g, ' - ') // figure/en/em dashes and "--"
-    .replace(/[​-‍⁠﻿]/g, '') // zero-width characters
+    .replace(/[\u200B-\u200D\u2060\uFEFF]/g, '') // zero-width characters
     .replace(/[^\S\n]+/g, ' ') // tabs and other spaces
     .replace(/[\p{Cc}\p{Co}]/gu, (c) => (c === '\n' ? c : '')); // control/private-use characters
 }
@@ -145,9 +145,9 @@ export function cleanSentence(sentence) {
     .replace(/"/g, ' ')
     .replace(/''+/g, "'") // closing quote + apostrophe: 'Verily''s
     .replace(/(^|[^\p{L}\p{N}])'+|'+(?=[^\p{L}\p{N}]|$)/gu, '$1 ') // quote marks, not apostrophes
-    .replace(/(\d)\.(?=\d)/g, '$1\u0000') // protect decimal points
-    .replace(/[^\p{L}\p{N}\s'$%+&\-\u0000]/gu, ' ') // all other punctuation
-    .replace(/\u0000/g, '.')
+    .replace(/(\d)\.(?=\d)/g, '$1') // protect decimal points (private-use char: normaliseUnicode strips any in the input)
+    .replace(/[^\p{L}\p{N}\s'$%+&\-]/gu, ' ') // all other punctuation
+    .replace(//g, '.')
     .replace(/(^|\s)[-+&']+(?=\s|$)|(^|\s)-+|-+(?=\s|$)/g, '$1$2 ') // dangling -, + or & (false starts "campaign-")
     .replace(/(^|\s)%/g, '$1') // % not attached to a number
     .replace(fillers, ' ')
