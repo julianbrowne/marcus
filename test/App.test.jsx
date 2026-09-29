@@ -482,3 +482,67 @@ test('ask retrieves the nearest words to a question and to an analogy, and maps 
   fireEvent.change(screen.getByLabelText('analogy c'), {target: {value: 'zzyzx'}});
   expect(view.querySelector('.analogy-section .hint').textContent).toContain('zzyzx');
 });
+
+test(`instruction mode shows each word's weight, both phrases' nearest words, their similarity and both points`, async () => {
+  render(<App />);
+  await selectCorpus('proverbs');
+  openView('ask');
+  const view = await findView('Ask a question');
+  fireEvent.click(within(view).getByRole('button', {name: 'instruction'}));
+  await waitFor(() => expect(view.querySelector('.instruction-mode .weights')).not.toBeNull());
+  expect(view.textContent).toContain('gutenberg-67-books'); // the instruction demo's default space
+  expect(view.querySelector('.caption a').getAttribute('href')).toBe('https://arxiv.org/abs/2311.07911');
+
+  const tables = [...view.querySelectorAll('.weights')];
+  const rows = (table) => [...table.querySelectorAll('tbody tr')].map((tr) => [...tr.children].map((c) => c.textContent));
+  const phrase = rows(tables[0]);
+  expect(phrase.map((r) => r[0])).toEqual(['make', 'no', 'mistakes']);
+  const weight = (word) => Number(phrase.find((r) => r[0] === word)[2]);
+  expect(weight('no')).toBeLessThan(weight('mistakes')); // common words weigh less
+  expect(phrase.reduce((s, r) => s + Number(r[3].replace('%', '')), 0)).toBeGreaterThanOrEqual(99); // shares ~100%
+  expect(rows(tables[1]).map((r) => r[0])).toEqual(['make', 'mistakes']);
+
+  // stopwords and unknown words are shown as dropped
+  fireEvent.change(screen.getByLabelText('comparison'), {target: {value: 'do the zzyzx'}});
+  expect(rows(view.querySelectorAll('.weights')[1]).map((r) => r[1])).toEqual(['dropped: stopword', 'dropped: stopword', 'dropped: not in vocabulary']);
+  fireEvent.change(screen.getByLabelText('comparison'), {target: {value: 'make mistakes'}});
+
+  expect(view.querySelector('.similarity').textContent).toMatch(/Cosine similarity of the two phrases: 0\.\d{3}/);
+  expect(view.querySelectorAll('.space-map .query')).toHaveLength(2);
+  expect([...view.querySelectorAll('.space-map .query text')].map((t) => t.textContent)).toEqual(['make no mistakes', 'make mistakes']);
+});
+
+test('navigate marks the instruction and the context window, and shows when the instruction stops mattering', async () => {
+  await buildProverbs(); // n = 2
+  fireEvent.change(screen.getByLabelText('Instruction (optional)'), {target: {value: 'Make no mistakes'}});
+  openView('navigate');
+  const view = await findView('Navigate the chain');
+  expect(view.querySelector('.hint .instruction').textContent).toBe('make no mistakes'); // spelled as the chain spells it
+  fireEvent.click([...view.querySelectorAll('.chips-area .chip')].find((c) => c.textContent.startsWith('a ')));
+
+  const sentence = screen.getByLabelText('sentence so far');
+  expect(sentence.textContent).toBe('make no mistakes a');
+  expect([...sentence.querySelectorAll('.instruction')].map((s) => s.textContent)).toEqual(['make', 'no', 'mistakes']);
+  // the 2-word window still reaches back into the instruction, so the options differ
+  expect(view.querySelector('.window-status').className).toContain('different');
+  expect(view.querySelector('.window-status').textContent).toContain('1 of its words is still in the 2-word window');
+
+  // one more word: the window is now all sentence, so the options are the same as without the instruction
+  fireEvent.click(view.querySelector('.chips-area .chip:not(.end)'));
+  expect(view.querySelector('.window-status').className).toContain('same');
+  const context = [...sentence.querySelectorAll('.context')].map((s) => s.textContent);
+  expect(context).toHaveLength(2);
+  expect(sentence.querySelectorAll('.instruction.context')).toHaveLength(0);
+});
+
+test('generating with an instruction shows it and marks the words chosen while it was in the window', async () => {
+  await buildProverbs(); // n = 2
+  fireEvent.change(screen.getByLabelText('Instruction (optional)'), {target: {value: 'make no mistakes'}});
+  fireEvent.click(button('generate'));
+  const paragraph = home().querySelector('p:last-child');
+  expect(paragraph.querySelector('.instruction').textContent).toBe('make no mistakes');
+  const marked = [...paragraph.querySelectorAll('.in-window')].map((m) => m.textContent);
+  expect(marked).toHaveLength(5); // one per sentence
+  for (const m of marked) expect(m.split(' ').length).toBeLessThanOrEqual(2); // the first n words
+  expect(home().querySelector('.caption a').getAttribute('href')).toBe('https://arxiv.org/abs/2311.07911');
+});

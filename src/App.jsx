@@ -1,5 +1,6 @@
 import {useState} from 'react';
 import {Blocks, Eraser, FlaskConical, ScanText, Sparkles, Waypoints, X} from 'lucide-react';
+import InstructionCaption from './InstructionCaption';
 import {Markov, MAX_ORDER} from './markov';
 import WordMap from './WordMap';
 import ChainTable from './ChainTable';
@@ -20,6 +21,13 @@ const files = {
 };
 const load = (kind, name) => files[kind][`./corpus/${kind}/${name}.${kind === 'profile' || kind === 'space' ? 'json' : 'txt'}`]();
 const CORPORA = Object.keys(files.clean).map((path) => path.replace(/^.*\/|\.txt$/g, ''));
+
+// a corpus's word space, loaded once and kept (the instruction demo reuses the 67 books' space)
+const spaces = new Map();
+const loadSpaceFor = async (name) => {
+  if (!spaces.has(name)) spaces.set(name, loadSpace(await load('space', name)));
+  return spaces.get(name);
+};
 
 // the table only models the most frequent contexts
 const TOP_WORDS = 500;
@@ -77,8 +85,8 @@ const views = {
   graph: (map) => <WordMap map={map} />,
   table: (rows) => <ChainTable rows={rows} />,
   analysis: (data) => <TextAnalysis {...data} />,
-  navigate: (marcus) => <Navigator key={marcus.order} marcus={marcus} />,
-  ask: (space) => <QuestionView space={space} />,
+  navigate: (marcus, {instruction}) => <Navigator key={marcus.order} marcus={marcus} instruction={marcus.spell(instruction)} />,
+  ask: (space) => <QuestionView space={space} loadSpaceFor={loadSpaceFor} />,
 };
 
 // analyse generated text with wink-nlp, loaded on first use (~1MB), one group per context length
@@ -89,6 +97,27 @@ async function analyseGenerated(paragraphs) {
     const texts = paragraphs.filter((p) => p.order === order).map((p) => p.text);
     return {order, paragraphs: texts.length, profile: analyse(texts.join('\n')).profile};
   });
+}
+
+// a generated paragraph: sentence by sentence, with the first `order` words of each (chosen while the
+// instruction was still inside the context window) marked
+function Paragraph({text, order, instruction}) {
+  if (!instruction) return text;
+  const sentences = text.trim().split(/(?<=\.) /);
+  return (
+    <>
+      <span className="instruction">{instruction}</span>{' '}
+      {sentences.map((sentence, i) => {
+        const words = sentence.split(' ');
+        return (
+          <span key={i}>
+            <span className="in-window">{words.slice(0, order).join(' ')}</span>
+            {words.length > order && ` ${words.slice(order).join(' ')}`}{' '}
+          </span>
+        );
+      })}
+    </>
+  );
 }
 
 function Stat({label, value, note}) {
@@ -109,6 +138,8 @@ export default function App() {
   const [paragraphs, setParagraphs] = useState([]);
   const [view, setView] = useState(null); // null (generated text) | {type: a key of views, data} shown in the main pane
   const [profile, setProfile] = useState(null); // headline figures for the selected corpus
+  const [instruction, setInstruction] = useState(''); // words placed before each sentence, e.g. "make no mistakes"
+  const instructionWords = instruction.trim().split(/\s+/).filter(Boolean);
 
   const n = Number(order);
   const validOrder = Number.isInteger(n) && n >= 1 && n <= MAX_ORDER;
@@ -153,14 +184,15 @@ export default function App() {
       if (type === 'graph') data = (await load('profile', corpus)).map;
       if (type === 'table') data = marcus.topContexts(TOP_WORDS);
       if (type === 'navigate') data = marcus;
-      if (type === 'ask') data = loadSpace(await load('space', corpus));
+      if (type === 'ask') data = await loadSpaceFor(corpus);
       if (type === 'analysis') data = {corpus: profile, generated: await analyseGenerated(paragraphs)};
       setView({type, data});
     });
   }
 
   function generate() {
-    setParagraphs([...paragraphs, {text: marcus.generate(), order: marcus.order}]);
+    const words = marcus.spell(instructionWords);
+    setParagraphs([...paragraphs, {text: marcus.generate(words), order: marcus.order, instruction: words.join(' ')}]);
     setView(null); // show it
   }
 
@@ -194,6 +226,11 @@ export default function App() {
             Context words (n)
             <input type="number" min="1" max={MAX_ORDER} step="1" value={order}
               onChange={chooseOrder} disabled={!!busy} aria-invalid={!validOrder} />
+          </label>
+          <label className="field">
+            Instruction (optional)
+            <input type="text" value={instruction} placeholder="e.g. make no mistakes"
+              onChange={(e) => setInstruction(e.target.value)} disabled={!!busy} />
           </label>
           <button className={marcus ? '' : 'cta'} onClick={() => run('build', async () => setMarcus(buildMarkov(await load('clean', corpus), n)))}
             disabled={!corpus || !validOrder || !!busy}>
@@ -244,7 +281,7 @@ export default function App() {
                     <X aria-hidden="true" />
                   </button>
                 </div>
-                {views[view.type](view.data)}
+                {views[view.type](view.data, {instruction: instructionWords})}
               </section>
             ) : (
               <>
@@ -269,8 +306,17 @@ export default function App() {
                   </div>
                   <div id="console" className="card-content">
                     {paragraphs.length === 0 && <div className="empty">Nothing generated yet.</div>}
-                    {paragraphs.map(({text, order}, i) => (
-                      <p key={i}><span className="badge">n={order}</span> {text}</p>
+                    {paragraphs.some((p) => p.instruction) && (
+                      <>
+                        <InstructionCaption />
+                        <p className="hint">
+                          Underlined words were chosen while the instruction was still inside the n-word context window;
+                          after that the chain cannot see it.
+                        </p>
+                      </>
+                    )}
+                    {paragraphs.map(({text, order, instruction}, i) => (
+                      <p key={i}><span className="badge">n={order}</span> <Paragraph text={text} order={order} instruction={instruction} /></p>
                     ))}
                   </div>
                 </section>

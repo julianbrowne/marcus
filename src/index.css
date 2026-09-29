@@ -1014,3 +1014,65 @@ input[aria-invalid="true"] {
     grid-column: auto;
   }
 }
+
+/* ---------- instructions ---------- */
+
+.instruction {
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+
+.in-window {
+  text-decoration: underline;
+  text-decoration-color: var(--cta);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.window-status {
+  margin: 0 0 12px;
+  padding: 6px 10px;
+  border-radius: calc(var(--radius) - 4px);
+  font-size: 13px;
+}
+
+.window-status.different {
+  background: color-mix(in oklch, var(--cta) 12%, transparent);
+}
+
+.window-status.same {
+  background: var(--muted);
+}
+
+.instruction-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 12px;
+}
+
+.instruction-grid .nav-input {
+  max-width: none;
+}
+
+.weights {
+  margin: 8px 0 12px;
+}
+
+.weights tr.stopword td,
+.weights tr.unknown td {
+  color: var(--muted-foreground);
+}
+
+.similarity {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.space-figure.wide {
+  margin: 0;
+}
+
+.space-map .query.comparison rect {
+  fill: var(--pos-adjective);
+}

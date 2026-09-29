@@ -118,15 +118,36 @@ test('generated text rarely ends on a dangling word (real corpus)', async () => 
 test('followers lists what can follow a context, with null for the sentence ending', () => {
   const m = build('the cat sat\nthe cat ran\nthe dog sat\na cat sat', 1);
   // sentence starts
-  expect(m.followers([])).toEqual({context: [], total: 4, options: [{word: 'the', count: 3}, {word: 'a', count: 1}]});
+  expect(m.followers([])).toEqual({context: [], backedOff: 0, total: 4, options: [{word: 'the', count: 3}, {word: 'a', count: 1}]});
   // order 1: only the last word matters
-  expect(m.followers(['the', 'cat'])).toEqual({context: ['cat'], total: 3, options: [{word: 'sat', count: 2}, {word: 'ran', count: 1}]});
-  expect(m.followers(['the', 'cat', 'sat'])).toEqual({context: ['sat'], total: 3, options: [{word: null, count: 3}]}); // sat always ends
+  expect(m.followers(['the', 'cat'])).toEqual({context: ['cat'], backedOff: 0, total: 3, options: [{word: 'sat', count: 2}, {word: 'ran', count: 1}]});
+  expect(m.followers(['the', 'cat', 'sat'])).toEqual({context: ['sat'], backedOff: 0, total: 3, options: [{word: null, count: 3}]}); // sat always ends
   expect(m.followers(['unknown']).total).toBe(0);
 
   m.setOrder(2);
   expect(m.followers(['a', 'cat']).options).toEqual([{word: 'sat', count: 1}]); // "a cat" never ran
   expect(m.followers(['a']).context).toEqual(['a']); // short: sentence start + "a"
-  expect(m.followers(['cat'], true).total).toBe(0); // no sentence starts with "cat"
+  // no sentence starts with "cat": back off to "cat" alone
+  expect(m.followers(['cat'], true)).toMatchObject({context: ['cat'], backedOff: 1, options: [{word: 'sat', count: 2}, {word: 'ran', count: 1}]});
   expect(m.followers(['cat'], false).options).toEqual([{word: 'sat', count: 2}, {word: 'ran', count: 1}]); // mid-sentence
+});
+
+test('backoff moves past a context the corpus never saw, including unknown words', () => {
+  const m = build('the cat sat\nthe dog ran', 2);
+  // "mistakes the" never occurs: drop the oldest word and use what follows "the"
+  expect(m.followers(['make', 'no', 'mistakes', 'the'])).toMatchObject({context: ['the'], backedOff: 1});
+  expect(m.followers(['make', 'no', 'mistakes', 'the']).options.map((o) => o.word).sort()).toEqual(['cat', 'dog']);
+  // once the sentence fills the window, the instruction has no effect
+  expect(m.followers(['make', 'no', 'mistakes', 'the', 'cat'])).toEqual(m.followers(['the', 'cat']));
+});
+
+test('generate with an instruction seeds each sentence but does not output it', () => {
+  const m = build('make no mistakes\nno mistakes here\nthe cat sat\nthe dog ran', 2, 2);
+  m.setMinSentences(20);
+  const sentences = m.generate(['make', 'no', 'mistakes']).split('. ').filter(Boolean);
+  expect(sentences.length).toBe(20);
+  for (const s of sentences) expect(s.toLowerCase()).not.toMatch(/^make no mistakes/); // instruction isn't output
+  // after "no mistakes" the corpus continued with "here" or ended, so seeded sentences start with "here"
+  expect(sentences.some((s) => s.startsWith('Here'))).toBe(true);
+  expect(m.generate(['zzz', 'qqq']).length).toBeGreaterThan(0); // unknown instruction: falls back to a sentence start
 });

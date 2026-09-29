@@ -22,6 +22,9 @@ const MAP_WORDS = 500; // words on the word map
 // the question space: associated words (a +/-4 word window groups paris with france), many dimensions
 // for similarity. Building it takes 1-2s (26s for the 67 books), so it's done here, not in the browser
 const SPACE = {window: 4, rows: 2000, cols: 500, dims: 50};
+// the instruction demo ("make no mistakes") runs on the 67 books; words like mistakes/error/correct
+// rank 2,500-7,000 there, so its space keeps 8,000 words (others stay at 2,000 to keep files small)
+const SPACE_ROWS = {'gutenberg-67-books': 8000};
 const dir = (name) => new URL(`../src/corpus/${name}/`, import.meta.url);
 const RAW = dir('raw');
 const CLEAN = dir('clean');
@@ -72,7 +75,7 @@ for (const file of readdirSync(RAW).filter((f) => f.endsWith('.txt')).sort()) {
   const points = embed(markov.pairs(), {rows: MAP_WORDS}).map((p) => ({...p, pos: posOf.get(p.word) ?? null}));
 
   const lines = cleaned.split('\n');
-  const space = embed(contextPairs(lines.map((l) => l.split(' ')), SPACE.window), SPACE);
+  const space = embed(contextPairs(lines.map((l) => l.split(' ')), SPACE.window), {...SPACE, rows: SPACE_ROWS[name] ?? SPACE.rows});
   const round = (x) => Math.round(x * 1000) / 1000;
   writeFileSync(spaceOut, JSON.stringify({
     window: SPACE.window,

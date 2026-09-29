@@ -12,6 +12,7 @@
 
 export const MAX_ORDER = 10;
 const BOUNDARY = 0;
+const UNKNOWN = -2; // a word the corpus never contains: matches nothing (-1 is "past the end")
 
 export class Markov {
   constructor(corpus) {
@@ -101,6 +102,35 @@ export class Markov {
     };
   }
 
+  /**
+   * The longest tail of a context the corpus has seen, and its block: standard n-gram
+   * backoff, dropping the oldest word until the rest has been seen. Unknown words are
+   * never seen, so backoff moves past them. With `restart`, if even the last word was
+   * never seen, fall back to a sentence start.
+  **/
+  seenBlock(context, restart = false) {
+    let b = this.block(context);
+    while (b.end <= b.start && context.length > 1) {
+      context = context.slice(1);
+      b = this.block(context);
+    }
+    if (b.end <= b.start && restart) {
+      context = [BOUNDARY];
+      b = this.block(context);
+    }
+    return {...b, context};
+  }
+
+  idsOf(words) {
+    return words.map((w) => this.ids.get(w) ?? UNKNOWN);
+  }
+
+  // typed words as the chain spells them: as typed, or in lower case (the clean text is truecased);
+  // words it doesn't know stay as typed
+  spell(words) {
+    return words.map((w) => (this.ids.has(w) || !this.ids.has(w.toLowerCase()) ? w : w.toLowerCase()));
+  }
+
   // the last `order` token ids of a sentence so far, led by the sentence-start
   // boundary while the sentence is shorter than that
   contextFor(sentenceIds) {
@@ -118,10 +148,12 @@ export class Markov {
     return end > start ? (endsUntil - start) / (end - start) : 0;
   }
 
-  generate() {
+  // instruction: words that come before every sentence, seeding its context (not part of the output)
+  generate(instruction = []) {
+    const prefix = this.idsOf(instruction);
     let paragraph = '';
     for (let i = 0; i < this.minSentences; i++) {
-      const s = this.sentence().trim(); // trim before capitalising, or "I grieve" becomes "Igrieve"
+      const s = this.sentence(prefix).trim(); // trim before capitalising, or "I grieve" becomes "Igrieve"
       if (s !== '') paragraph += s.charAt(0).toUpperCase() + s.slice(1) + '. ';
     }
     return paragraph;
@@ -135,31 +167,33 @@ export class Markov {
    * that only ever ends sentences) or never pass a plausible ending are
    * retried; if all fail, a short but properly ended one is preferred.
   **/
-  sentence() {
+  sentence(prefix = []) {
     let fallback;
     let attempt;
     for (let i = 0; i < 10; i++) {
-      attempt = this.attemptSentence();
+      attempt = this.attemptSentence(prefix);
       if (attempt.ended && attempt.longEnough) return attempt.text;
       if (attempt.ended) fallback ??= attempt;
     }
     return (fallback ?? attempt).text; // ponytail: 10 tries; only odd corpora get here
   }
 
-  attemptSentence() {
+  // prefix: token ids before the sentence (an instruction); they seed the context but aren't output
+  attemptSentence(prefix = []) {
     const maxWords = this.minWordsInSentence * 3;
-    const ids = [];
+    const ids = [...prefix];
+    const own = () => ids.length - prefix.length; // words generated so far
     let best = {length: 0, chance: 0}; // most likely ending at or past the minimum length
     let bestShort = {length: 0, chance: 0}; // ...and before it
-    const text = () => ids.map((id) => this.words[id]).join(' ');
-    const result = (ended) => ({text: text(), ended, longEnough: ids.length >= this.minWordsInSentence});
+    const text = () => ids.slice(prefix.length).map((id) => this.words[id]).join(' ');
+    const result = (ended) => ({text: text(), ended, longEnough: own() >= this.minWordsInSentence});
 
     while (true) {
-      const context = this.contextFor(ids);
-      const {start, endsUntil, end} = this.block(context);
-      const longEnough = ids.length >= this.minWordsInSentence;
+      // with an instruction the context may be one the corpus never saw: back off
+      const {start, endsUntil, end, context} = this.seenBlock(this.contextFor(ids), true);
+      const longEnough = own() >= this.minWordsInSentence;
       const chance = (endsUntil - start) / (end - start);
-      if (ids.length > 0) {
+      if (own() > 0) {
         if (longEnough && chance > best.chance) best = {length: ids.length, chance};
         if (!longEnough && chance > bestShort.chance) bestShort = {length: ids.length, chance};
       }
@@ -168,8 +202,8 @@ export class Markov {
       const from = longEnough || endsUntil === end ? start : endsUntil;
       const next = this.tokens[this.suffixes[from + Math.floor(Math.random() * (end - from))] + context.length];
 
-      if (next === BOUNDARY) return result(ids.length > 0);
-      if (ids.length >= maxWords) {
+      if (next === BOUNDARY) return result(own() > 0);
+      if (own() >= maxWords) {
         const cut = best.chance > 0 ? best : bestShort;
         if (cut.chance > 0) ids.length = cut.length;
         return result(cut.chance > 0);
@@ -183,15 +217,16 @@ export class Markov {
    * same context (their last `order` words), most frequent first, with null
    * for "the sentence ended here". With `atStart` the words began a sentence,
    * so while they're shorter than the context the sentence start counts too;
-   * otherwise they're a run from anywhere in a sentence.
-   * {context: [words the choice depends on], total, options: [{word, count}]}
+   * otherwise they're a run from anywhere in a sentence. If the corpus never saw that
+   * context, it backs off to the longest tail it did see (backedOff: words dropped).
+   * {context: [words the choice depends on], backedOff, total, options: [{word, count}]}
   **/
   followers(words, atStart = true) {
-    const ids = words.map((w) => this.ids.get(w));
-    const none = {context: [], total: 0, options: []};
-    if (ids.includes(undefined) || (!atStart && ids.length === 0)) return none;
-    const context = atStart ? this.contextFor(ids) : ids.slice(-this.order);
-    const {start, end} = this.block(context);
+    const none = {context: [], backedOff: 0, total: 0, options: []};
+    if (!atStart && words.length === 0) return none;
+    const ids = this.idsOf(words);
+    const wanted = atStart ? this.contextFor(ids) : ids.slice(-this.order);
+    const {start, end, context} = this.seenBlock(wanted);
     if (end <= start) return none;
     const counts = new Map();
     for (let i = start; i < end; i++) {
@@ -200,6 +235,7 @@ export class Markov {
     }
     return {
       context: context.filter((id) => id !== BOUNDARY).map((id) => this.words[id]),
+      backedOff: wanted.length - context.length,
       total: end - start,
       options: [...counts]
         .map(([id, count]) => ({word: id === BOUNDARY ? null : this.words[id], count}))

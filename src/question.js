@@ -37,25 +37,32 @@ const unit = (v) => {
 /**
  * A question as a vector: its non-stopwords that the space knows, each weighted by
  * inverse frequency (log(total / count), so rare, specific words count more), then
- * the weighted average of their unit vectors. {vector, used: [{word, weight}], unknown}
+ * the weighted average of their unit vectors.
+ * {vector, used: [{word, weight}], unknown, terms}: terms is every word as typed, with
+ * what happened to it (status 'stopword' | 'unknown' | 'used') and its share of the vector.
  */
 export function queryVector(space, text) {
-  const words = text.split(/\s+/).map(norm).filter((w) => w && !STOPWORDS.has(w));
-  const used = [];
-  const unknown = [];
-  const sum = new Float64Array(space.dims);
-  for (const word of new Set(words)) {
+  const terms = text.split(/\s+/).map(norm).filter(Boolean).map((word) => {
+    if (STOPWORDS.has(word)) return {word, status: 'stopword', weight: 0};
     const i = space.index.get(word);
-    if (i === undefined) {
-      unknown.push(word);
-      continue;
-    }
-    const weight = Math.log(space.total / space.count(i));
-    used.push({word, weight: Math.round(weight * 100) / 100});
-    space.vector(i).forEach((x, d) => { sum[d] += weight * x; });
+    if (i === undefined) return {word, status: 'unknown', weight: 0};
+    return {word, status: 'used', weight: Math.round(Math.log(space.total / space.count(i)) * 100) / 100};
+  });
+  const used = [];
+  const sum = new Float64Array(space.dims);
+  for (const term of terms) {
+    if (term.status !== 'used' || used.some((u) => u.word === term.word)) continue;
+    used.push({word: term.word, weight: term.weight});
+    space.vector(space.index.get(term.word)).forEach((x, d) => { sum[d] += term.weight * x; });
   }
-  return {vector: used.length ? unit(Array.from(sum)) : null, used, unknown};
+  const total = used.reduce((s, u) => s + u.weight, 0);
+  for (const term of terms) term.share = total ? term.weight / total : 0;
+  const unknown = [...new Set(terms.filter((t) => t.status === 'unknown').map((t) => t.word))];
+  return {vector: used.length ? unit(Array.from(sum)) : null, used, unknown, terms};
 }
+
+// cosine similarity of two unit vectors
+export const cosine = (a, b) => dot(a, b);
 
 // the k words whose vectors are most similar (cosine, all dimensions) to a unit vector;
 // stopwords aren't answers, just as they aren't part of the question
