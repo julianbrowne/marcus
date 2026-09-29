@@ -27,6 +27,8 @@ At build time (and before `npm run dev` / `npm test`), `scripts/prepare-corpora.
 - `src/corpus/profile/<name>.json`: a corpus profile from [wink-nlp](https://github.com/winkjs/wink-nlp) (readability, parts of speech, tone and its arc across the text, common and distinctive words, key sentences, numbers and dates) plus the word map, with each word's part of speech
 - `src/corpus/cache/<name>.json`: build-only content-word counts; distinctive words (BM25) compare every corpus with the others, so they're scored in a final pass over these
 
+In the app, **ask** (next to raw, clean and profile) takes a question such as "what is the capital of france", drops stopwords, weights the remaining words by rarity and averages their vectors from a 2,000-word, 50-dimension space built at build time (PPMI over a +/-4 word window, reduced with PCA; `src/corpus/space/<name>.json`). It lists the 10 nearest words by cosine, maps them with the question, and does analogies (paris - france + italy). This is similarity retrieval over word co-occurrence, not how an LLM generates an answer.
+
 In the app, **navigate** (next to graph and table) walks the chain by hand: pick a sentence starter, or type words to start mid-sentence, then pick each next word from those that followed the same context in the corpus, with the context words highlighted, until the sentence ends.
 
 In the app, **analyse** (in the Generated text card) loads wink-nlp on demand and measures the generated text the same way, one column per context length, beside the corpus's own figures.
@@ -46,6 +48,8 @@ These folders are generated (and git-ignored); a corpus is only re-prepared when
 General-purpose texts for testing clustering (sources and licences in [`src/corpus/SOURCES.md`](src/corpus/SOURCES.md)):
 
 `aesop.txt`, `alice.txt`, `pride-and-prejudice.txt`, `sherlock-holmes.txt` - public domain books from Project Gutenberg
+
+`geography.txt` - ~2 MB of Wikipedia: every sovereign state and its capital (CC BY-SA 4.0), for the ask feature. Recreate with `node scripts/fetch-wikipedia.mjs [count]`
 
 `moby-dick.txt` - *Moby Dick* by Herman Melville, from Project Gutenberg
 

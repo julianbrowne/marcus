@@ -51,15 +51,30 @@ export function stripGutenberg(text) {
     .join('\n');
 }
 
+// a heading line: text between runs of "=" (WikiText "= = X = =", MediaWiki "== X =="). Checked
+// without a regex, which on a long run of "=" can backtrack for minutes
+function isHeading(line) {
+  const t = line.trim();
+  if (t.length < 3 || t[0] !== '=' || t[t.length - 1] !== '=') return false;
+  let start = 0;
+  let end = t.length;
+  while (start < end && (t[start] === '=' || t[start] === ' ')) start++;
+  while (end > start && (t[end - 1] === '=' || t[end - 1] === ' ')) end--;
+  return end > start && !t.slice(start, end).includes('=');
+}
+
 /**
  * Undo tokenisation in pre-tokenised corpora like WikiText: "role @-@ playing",
- * "1 @,@ 000", "the game 's", "do n't", and "= = Heading = =" lines.
+ * "1 @,@ 000", "the game 's", "do n't"; and drop heading lines, both WikiText's
+ * "= = Heading = =" and MediaWiki's "== Heading ==".
  */
 export function detokenise(text) {
   return text
     .replace(/ @([-,.])@ /g, '$1')
     .replace(/ (?=(?:'s|'re|'ve|'ll|'d|'m|n't)\b)/gi, '')
-    .replace(/^ *(?:= )+[^=\n]*(?: =)+ *$/gm, '');
+    .split('\n')
+    .map((line) => (isHeading(line) ? '' : line))
+    .join('\n');
 }
 
 /**

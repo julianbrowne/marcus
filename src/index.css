@@ -907,3 +907,110 @@ input[aria-invalid="true"] {
   gap: 8px;
   margin-bottom: 12px;
 }
+
+/* ---------- ask a question ---------- */
+
+.ask {
+  padding: 16px;
+}
+
+.ask section + section {
+  margin-top: 24px;
+}
+
+.caption {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--cta);
+  background: var(--muted);
+  font-size: 13px;
+}
+
+.ask h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.ask-results {
+  display: grid;
+  grid-template-columns: minmax(160px, max-content) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.answers {
+  margin: 0;
+  padding-left: 22px;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.answers small {
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.space-figure {
+  grid-column: -2 / -1;
+  margin: 0;
+}
+
+.space-figure .hint {
+  margin-top: 4px;
+}
+
+.space-map {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 2px);
+  font-size: 15px;
+}
+
+.space-map .word-dot {
+  fill: var(--muted-foreground);
+  opacity: 0.35;
+}
+
+.space-map text {
+  fill: var(--foreground);
+  paint-order: stroke;
+  stroke: var(--card);
+  stroke-width: 4px;
+}
+
+.space-map .answer circle {
+  fill: var(--cta);
+}
+
+.space-map .asked circle {
+  fill: var(--pos-verb);
+}
+
+.space-map .query rect {
+  fill: var(--pos-verb);
+  stroke: var(--card);
+  stroke-width: 2px;
+}
+
+.space-map .query text {
+  font-weight: 600;
+}
+
+.analogy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 480px;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 800px) {
+  .ask-results {
+    grid-template-columns: 1fr;
+  }
+
+  .space-figure {
+    grid-column: auto;
+  }
+}

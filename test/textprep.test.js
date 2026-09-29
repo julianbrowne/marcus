@@ -23,6 +23,15 @@ test('stripGutenberg keeps only the book and drops Project Gutenberg references'
   expect(stripGutenberg(two)).toBe('Once upon a time.\nThe end.\n\nSecond book.\nThe end.');
 });
 
+test('detokenise drops MediaWiki headings but not text that merely contains =', () => {
+  expect(detokenise('= France =\nFrance is a country.\n== History ==\n=== Etymology ===\nIn 1 = 1 terms.'))
+    .toBe('\nFrance is a country.\n\n\nIn 1 = 1 terms.');
+  // a long run of "=" (a text divider) is quick and left alone
+  const started = performance.now();
+  expect(detokenise(`${'='.repeat(5000)} x`)).toBe(`${'='.repeat(5000)} x`);
+  expect(performance.now() - started).toBeLessThan(100);
+});
+
 test('detokenise undoes WikiText-style tokenisation', () => {
   expect(detokenise(' = = Gameplay = = \n The game \'s role @-@ playing system cost 1 @,@ 000 or 2 @.@ 5 , and we do n\'t know .'))
     .toBe('\n The game\'s role-playing system cost 1,000 or 2.5 , and we don\'t know .');

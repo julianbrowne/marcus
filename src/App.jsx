@@ -6,6 +6,8 @@ import ChainTable from './ChainTable';
 import CorpusProfile from './CorpusProfile';
 import TextAnalysis from './TextAnalysis';
 import Navigator from './Navigator';
+import QuestionView from './QuestionView';
+import {loadSpace} from './question';
 import SegmentedButtons from './SegmentedButtons';
 
 // Corpora are prepared at build time (scripts/prepare-corpora.mjs): raw text, clean text
@@ -14,8 +16,9 @@ const files = {
   raw: import.meta.glob('./corpus/raw/*.txt', {query: '?raw', import: 'default'}),
   clean: import.meta.glob('./corpus/clean/*.txt', {query: '?raw', import: 'default'}),
   profile: import.meta.glob('./corpus/profile/*.json', {import: 'default'}),
+  space: import.meta.glob('./corpus/space/*.json', {import: 'default'}),
 };
-const load = (kind, name) => files[kind][`./corpus/${kind}/${name}.${kind === 'profile' ? 'json' : 'txt'}`]();
+const load = (kind, name) => files[kind][`./corpus/${kind}/${name}.${kind === 'profile' || kind === 'space' ? 'json' : 'txt'}`]();
 const CORPORA = Object.keys(files.clean).map((path) => path.replace(/^.*\/|\.txt$/g, ''));
 
 // the table only models the most frequent contexts
@@ -35,9 +38,10 @@ const BUSY = {
   table: 'Building table…',
   analysis: 'Analysing generated text…',
   navigate: 'Opening the chain…',
+  ask: 'Loading word vectors…',
 };
 
-const TITLES = {raw: 'Raw text', clean: 'Clean text', profile: 'Profile', graph: 'Word map', table: 'Chain table', analysis: 'Generated text analysis', navigate: 'Navigate the chain'};
+const TITLES = {raw: 'Raw text', clean: 'Clean text', profile: 'Profile', graph: 'Word map', table: 'Chain table', analysis: 'Generated text analysis', navigate: 'Navigate the chain', ask: 'Ask a question'};
 
 // wait until the browser has painted, so the spinner shows before the main thread blocks
 const nextPaint = () => new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve)));
@@ -74,6 +78,7 @@ const views = {
   table: (rows) => <ChainTable rows={rows} />,
   analysis: (data) => <TextAnalysis {...data} />,
   navigate: (marcus) => <Navigator key={marcus.order} marcus={marcus} />,
+  ask: (space) => <QuestionView space={space} />,
 };
 
 // analyse generated text with wink-nlp, loaded on first use (~1MB), one group per context length
@@ -148,6 +153,7 @@ export default function App() {
       if (type === 'graph') data = (await load('profile', corpus)).map;
       if (type === 'table') data = marcus.topContexts(TOP_WORDS);
       if (type === 'navigate') data = marcus;
+      if (type === 'ask') data = loadSpace(await load('space', corpus));
       if (type === 'analysis') data = {corpus: profile, generated: await analyseGenerated(paragraphs)};
       setView({type, data});
     });
@@ -178,7 +184,7 @@ export default function App() {
               {CORPORA.map((name) => <option key={name} value={name}>{name}</option>)}
             </select>
           </label>
-          <SegmentedButtons label="view corpus" options={['raw', 'clean', 'profile']} active={view?.type}
+          <SegmentedButtons label="view corpus" options={['raw', 'clean', 'profile', 'ask']} active={view?.type}
             disabled={!corpus || !!busy} onSelect={toggle} />
         </section>
 

@@ -80,3 +80,56 @@ test('the picture keeps its orientation whatever order the pairs arrive in', asy
     expect(agree('y')).toBeGreaterThan(0.9);
   }
 });
+
+describe('questions and analogies over a windowed word space', async () => {
+  const {contextPairs} = await import('../src/embed');
+  const {loadSpace, queryVector, nearest, analogy} = await import('../src/question');
+  // four countries, each with its capital and its own things; every fact said a few ways
+  const facts = [
+    ['paris', 'france', 'wine', 'cheese'],
+    ['rome', 'italy', 'pasta', 'pizza'],
+    ['madrid', 'spain', 'paella', 'flamenco'],
+    ['berlin', 'germany', 'beer', 'sausage'],
+  ];
+  const sentences = facts.flatMap(([city, country, a, b]) => [
+    `${city} is the capital of ${country}`,
+    `the capital of ${country} is ${city}`,
+    `${city} ${country} ${a} ${b}`,
+    `in ${country} people love ${a} and ${b}`,
+    `in ${city} people love ${a} and ${b}`,
+  ]).map((s) => s.split(' '));
+  const points = embed(contextPairs(sentences, 4), {rows: 100, cols: 100, dims: 8});
+  const space = loadSpace({
+    words: points.map((p) => p.word), counts: points.map((p) => p.count),
+    dims: points[0].vector.length, vectors: points.flatMap((p) => p.vector),
+  });
+
+  test('contextPairs: window 0 is the word before; window k is every word within k', () => {
+    expect([...contextPairs([['a', 'b', 'c']], 0)]).toEqual([['a', 'b'], ['b', 'c']]);
+    expect([...contextPairs([['a', 'b', 'c']], 1)]).toEqual([['b', 'a'], ['a', 'b'], ['c', 'b'], ['b', 'c']]);
+  });
+
+  test('vectors are unit length, with counts', () => {
+    for (const p of points) expect(Math.hypot(...p.vector)).toBeCloseTo(1, 5);
+    expect(points.find((p) => p.word === 'paris').count).toBeGreaterThan(0);
+  });
+
+  test('"what is the capital of france" retrieves paris', () => {
+    const q = queryVector(space, 'What is the capital of France?');
+    expect(q.used.map((u) => u.word)).toEqual(['capital', 'france']); // stopwords dropped, case and ? normalised
+    expect(q.used[1].weight).toBeGreaterThan(q.used[0].weight); // rarer word weighs more
+    expect(nearest(space, q.vector, 1, ['capital', 'france'])[0].word).toBe('paris');
+  });
+
+  test('unknown words are reported, not guessed', () => {
+    expect(queryVector(space, 'capital of atlantis').unknown).toEqual(['atlantis']);
+    expect(queryVector(space, 'what is it').vector).toBeNull();
+  });
+
+  test('paris - france + italy = rome', () => {
+    const {results} = analogy(space, 'paris', 'france', 'italy');
+    expect(results[0].word).toBe('rome');
+    expect(results.map((r) => r.word)).not.toContain('paris'); // inputs excluded
+    expect(analogy(space, 'paris', 'france', 'narnia').unknown).toEqual(['narnia']);
+  });
+});
