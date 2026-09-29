@@ -541,8 +541,62 @@ test('generating with an instruction shows it and marks the words chosen while i
   fireEvent.click(button('generate'));
   const paragraph = home().querySelector('p:last-child');
   expect(paragraph.querySelector('.instruction').textContent).toBe('make no mistakes');
+  // the first n (2) words of each of the 5 sentences, one word per mark
   const marked = [...paragraph.querySelectorAll('.in-window')].map((m) => m.textContent);
-  expect(marked).toHaveLength(5); // one per sentence
-  for (const m of marked) expect(m.split(' ').length).toBeLessThanOrEqual(2); // the first n words
+  expect(marked).toHaveLength(10);
+  for (const m of marked) expect(m).not.toContain(' ');
   expect(home().querySelector('.caption a').getAttribute('href')).toBe('https://arxiv.org/abs/2311.07911');
+});
+
+describe('the harness (uses the synthetic share-prices corpus)', () => {
+  async function buildShares(order) {
+    render(<App />);
+    await selectCorpus('share-prices');
+    fireEvent.change(screen.getByLabelText('Context words (n)'), {target: {value: String(order)}});
+    fireEvent.click(button('build'));
+    await waitFor(() => expect(button('generate').disabled).toBe(false));
+  }
+
+  test('navigate: a tool token is intercepted; sell is refused until permitted, then NUM is filled', async () => {
+    await buildShares(4);
+    openView('navigate');
+    const view = await findView('Navigate the chain');
+    fireEvent.change(screen.getByLabelText('starting words'), {target: {value: 'sell my tesco shares'}});
+    fireEvent.click(view.querySelector('.chip.phrase'));
+    fireEvent.click([...view.querySelectorAll('.chips-area .chip')].find((c) => c.textContent.startsWith('$sell-tsco')));
+
+    const panel = () => within(view).getByRole('note', {name: 'harness'});
+    expect(panel().textContent).toContain('token $sell-tsco → tool sell, argument tsco');
+    expect(panel().textContent).toContain('refused: the sell tool is not permitted');
+    fireEvent.click([...view.querySelectorAll('.chips-area .chip')].find((c) => c.textContent.startsWith('result')));
+    fireEvent.click([...view.querySelectorAll('.chips-area .chip')].find((c) => c.textContent.startsWith('NUM')));
+    const sentence = screen.getByLabelText('sentence so far');
+    expect(sentence.querySelector('.harness-filled').textContent).toBe('REFUSED');
+
+    fireEvent.click(screen.getByLabelText('allow the sell tool (harness permission)'));
+    expect(panel().textContent).toContain('pretended to sell tsco');
+    expect(sentence.querySelector('.harness-filled').textContent).toBe('101'); // the fake price, filled by the harness
+  });
+
+  test('navigate: typed words the chain has never seen are a plain dead end', async () => {
+    await buildShares(2);
+    openView('navigate');
+    const view = await findView('Navigate the chain');
+    fireEvent.change(screen.getByLabelText('starting words'), {target: {value: 'tesco zzyzx'}});
+    expect(view.querySelector('.dead-end').textContent).toMatch(/Dead end: “zzyzx” is not in this chain/);
+    expect(view.querySelector('.chip.phrase')).toBeNull();
+  });
+
+  test('generate: tool tokens get harness panels and filled results, apart from the predicted words', async () => {
+    await buildShares(6);
+    fireEvent.click(button('generate'));
+    const paragraph = home().querySelector('p:last-child');
+    const panels = [...paragraph.querySelectorAll('[aria-label="harness"]')];
+    expect(panels.length).toBeGreaterThan(0);
+    for (const p of panels) expect(p.textContent).toMatch(/^harness \(code, not the chain\)token \$(price|sell)-/);
+    expect(paragraph.querySelector('.harness-filled')).not.toBeNull();
+    // every NUM is either filled by the harness or marked as having no call before it
+    const bare = [...paragraph.querySelectorAll('span')].filter((s) => s.textContent === 'NUM' && !s.querySelector('span'));
+    expect(bare.every((s) => s.className === 'harness-unfilled')).toBe(true);
+  });
 });

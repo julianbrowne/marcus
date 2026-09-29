@@ -1,0 +1,344 @@
+what are sainsbury shares trading at $price-sbry result NUM so sainsbury shares are trading at NUM pence
+price check on sainsbury please $price-sbry result NUM so sainsbury shares are trading at NUM pence
+check the price of vodafone for me $price-vod result NUM so the price of vodafone is NUM pence
+how are unilever shares doing today $price-ulvr result NUM which means unilever is at NUM pence a share
+price check on shell please $price-shel result NUM so shell shares are trading at NUM pence
+whats the vodafone share price today $price-vod result NUM which means vodafone is at NUM pence a share
+can you get me a quote for lloyds $price-lloy result NUM which means lloyds is at NUM pence a share
+tell me the current price of sainsbury shares $price-sbry result NUM so the price of sainsbury is NUM pence
+tell me the current price of sainsbury shares $price-sbry result NUM so sainsbury shares are trading at NUM pence
+price check on bp please $price-bp result NUM so bp shares are trading at NUM pence
+sell my sainsbury shares $sell-sbry result NUM so your sainsbury shares have been sold at NUM pence
+what is the tesco share price $price-tsco result NUM which means tesco is at NUM pence a share
+give me the latest barclays stock price $price-barc result NUM which means barclays is at NUM pence a share
+please sell all my barclays shares now $sell-barc result NUM so your barclays shares have been sold at NUM pence
+i would like to know the unilever share price $price-ulvr result NUM so unilever shares are trading at NUM pence
+whats the barclays share price today $price-barc result NUM which means barclays is at NUM pence a share
+tell me the current price of barclays shares $price-barc result NUM which means barclays is at NUM pence a share
+please sell all my bp shares now $sell-bp result NUM so your bp shares have been sold at NUM pence
+how much are barclays shares worth $price-barc result NUM so barclays shares are trading at NUM pence
+price check on tesco please $price-tsco result NUM which means tesco is at NUM pence a share
+look up bp on the stock market $price-bp result NUM so the price of bp is NUM pence
+check the price of shell for me $price-shel result NUM so the price of shell is NUM pence
+price check on lloyds please $price-lloy result NUM which means lloyds is at NUM pence a share
+give me the latest vodafone stock price $price-barc result NUM so vodafone shares are trading at NUM pence
+price check on vodafone please $price-vod result NUM so the price of vodafone is NUM pence
+give me the latest bp stock price $price-bp result NUM so the price of bp is NUM pence
+can you get me a quote for tesco $price-tsco result NUM so tesco shares are trading at NUM pence
+can you get me a quote for tesco $price-tsco result NUM so the price of tesco is NUM pence
+can you get me a quote for sainsbury $price-sbry result NUM which means sainsbury is at NUM pence a share
+whats the vodafone share price today $price-vod result NUM so the price of vodafone is NUM pence
+check the price of lloyds for me $price-lloy result NUM so the price of lloyds is NUM pence
+what is the shell share price $price-shel result NUM so shell shares are trading at NUM pence
+price check on vodafone please $price-vod result NUM so vodafone shares are trading at NUM pence
+whats the unilever share price today $price-ulvr result NUM so the price of unilever is NUM pence
+get rid of my barclays shares $sell-barc result NUM so your barclays shares have been sold at NUM pence
+check the price of sainsbury for me $price-sbry result NUM so the price of sainsbury is NUM pence
+give me the latest sainsbury stock price $price-sbry result NUM so sainsbury shares are trading at NUM pence
+sell my bp shares $sell-bp result NUM so your bp shares have been sold at NUM pence
+i want to sell my tesco holding $sell-tsco result NUM so your tesco shares have been sold at NUM pence
+check the price of unilever for me $price-ulvr result NUM which means unilever is at NUM pence a share
+what is the unilever share price $price-ulvr result NUM so unilever shares are trading at NUM pence
+please sell all my tesco shares now $sell-tsco result NUM so your tesco shares have been sold at NUM pence
+how are vodafone shares doing today $price-vod result NUM which means vodafone is at NUM pence a share
+price check on unilever please $price-ulvr result NUM so the price of unilever is NUM pence
+i would like to know the tesco share price $price-tsco result NUM which means tesco is at NUM pence a share
+give me the latest lloyds stock price $price-lloy result NUM so lloyds shares are trading at NUM pence
+i would like to know the lloyds share price $price-lloy result NUM so lloyds shares are trading at NUM pence
+what are lloyds shares trading at $price-lloy result NUM which means lloyds is at NUM pence a share
+i want to sell my vodafone holding $sell-vod result NUM so your vodafone shares have been sold at NUM pence
+how much are barclays shares worth $price-ulvr result NUM so barclays shares are trading at NUM pence
+i would like to know the barclays share price $price-barc result NUM which means barclays is at NUM pence a share
+sell my vodafone shares $sell-vod result NUM so your vodafone shares have been sold at NUM pence
+how much are tesco shares worth $price-tsco result NUM so the price of tesco is NUM pence
+check the price of barclays for me $price-barc result NUM which means barclays is at NUM pence a share
+look up barclays on the stock market $price-barc result NUM so barclays shares are trading at NUM pence
+how are unilever shares doing today $price-ulvr result NUM so unilever shares are trading at NUM pence
+whats the barclays share price today $price-barc result NUM so the price of barclays is NUM pence
+how much are unilever shares worth $price-ulvr result NUM so unilever shares are trading at NUM pence
+can you get me a quote for sainsbury $price-sbry result NUM so sainsbury shares are trading at NUM pence
+i would like to know the shell share price $price-shel result NUM so the price of shell is NUM pence
+whats the bp share price today $price-bp result NUM so the price of bp is NUM pence
+price check on unilever please $price-ulvr result NUM which means unilever is at NUM pence a share
+what are shell shares trading at $price-shel result NUM so the price of shell is NUM pence
+look up vodafone on the stock market $price-vod result NUM so the price of vodafone is NUM pence
+i would like to know the shell share price $price-shel result NUM which means shell is at NUM pence a share
+whats the unilever share price today $price-ulvr result NUM which means unilever is at NUM pence a share
+tell me the current price of bp shares $price-bp result NUM which means bp is at NUM pence a share
+tell me the current price of lloyds shares $price-lloy result NUM so the price of lloyds is NUM pence
+sell my shell shares $sell-shel result NUM so your shell shares have been sold at NUM pence
+please sell all my shell shares now $sell-shel result NUM so your shell shares have been sold at NUM pence
+how much are sainsbury shares worth $price-sbry result NUM so sainsbury shares are trading at NUM pence
+check the price of unilever for me $price-ulvr result NUM so unilever shares are trading at NUM pence
+whats the lloyds share price today $price-lloy result NUM which means lloyds is at NUM pence a share
+what is the unilever share price $price-ulvr result NUM which means unilever is at NUM pence a share
+get rid of my unilever shares $sell-ulvr result NUM so your unilever shares have been sold at NUM pence
+price check on barclays please $price-barc result NUM so the price of barclays is NUM pence
+what are shell shares trading at $price-shel result NUM so shell shares are trading at NUM pence
+price check on shell please $price-shel result NUM which means shell is at NUM pence a share
+what are vodafone shares trading at $price-vod result NUM which means vodafone is at NUM pence a share
+tell me the current price of sainsbury shares $price-sbry result NUM which means sainsbury is at NUM pence a share
+how much are lloyds shares worth $price-lloy result NUM so the price of lloyds is NUM pence
+what is the sainsbury share price $price-sbry result NUM so sainsbury shares are trading at NUM pence
+i would like to know the bp share price $price-bp result NUM so the price of bp is NUM pence
+can you get me a quote for vodafone $price-vod result NUM so the price of vodafone is NUM pence
+i would like to know the vodafone share price $price-vod result NUM so the price of vodafone is NUM pence
+how are bp shares doing today $price-bp result NUM so the price of bp is NUM pence
+tell me the current price of vodafone shares $price-vod result NUM which means vodafone is at NUM pence a share
+price check on tesco please $price-tsco result NUM so tesco shares are trading at NUM pence
+check the price of shell for me $price-shel result NUM which means shell is at NUM pence a share
+give me the latest vodafone stock price $price-vod result NUM so the price of vodafone is NUM pence
+look up bp on the stock market $price-bp result NUM which means bp is at NUM pence a share
+tell me the current price of tesco shares $price-ulvr result NUM so tesco shares are trading at NUM pence
+i would like to know the unilever share price $price-ulvr result NUM which means unilever is at NUM pence a share
+check the price of tesco for me $price-tsco result NUM so the price of tesco is NUM pence
+price check on barclays please $price-barc result NUM so barclays shares are trading at NUM pence
+what is the shell share price $price-shel result NUM so the price of shell is NUM pence
+give me the latest shell stock price $price-shel result NUM so the price of shell is NUM pence
+price check on vodafone please $price-vod result NUM which means vodafone is at NUM pence a share
+tell me the current price of tesco shares $price-tsco result NUM which means tesco is at NUM pence a share
+whats the shell share price today $price-shel result NUM so shell shares are trading at NUM pence
+give me the latest tesco stock price $price-tsco result NUM so tesco shares are trading at NUM pence
+can you get me a quote for lloyds $price-lloy result NUM so the price of lloyds is NUM pence
+look up unilever on the stock market $price-ulvr result NUM so unilever shares are trading at NUM pence
+give me the latest unilever stock price $price-ulvr result NUM so unilever shares are trading at NUM pence
+can you get me a quote for bp $price-bp result NUM so the price of bp is NUM pence
+what is the bp share price $price-bp result NUM which means bp is at NUM pence a share
+whats the tesco share price today $price-tsco result NUM so tesco shares are trading at NUM pence
+i would like to know the barclays share price $price-barc result NUM so barclays shares are trading at NUM pence
+look up barclays on the stock market $price-barc result NUM so the price of barclays is NUM pence
+check the price of bp for me $price-bp result NUM which means bp is at NUM pence a share
+give me the latest bp stock price $price-bp result NUM so bp shares are trading at NUM pence
+price check on shell please $price-sbry result NUM so shell shares are trading at NUM pence
+can you get me a quote for shell $price-ulvr result NUM so shell shares are trading at NUM pence
+give me the latest vodafone stock price $price-vod result NUM so vodafone shares are trading at NUM pence
+tell me the current price of unilever shares $price-ulvr result NUM so the price of unilever is NUM pence
+what is the sainsbury share price $price-sbry result NUM which means sainsbury is at NUM pence a share
+tell me the current price of bp shares $price-bp result NUM so the price of bp is NUM pence
+how are lloyds shares doing today $price-lloy result NUM which means lloyds is at NUM pence a share
+price check on sainsbury please $price-sbry result NUM so the price of sainsbury is NUM pence
+can you get me a quote for shell $price-shel result NUM which means shell is at NUM pence a share
+look up lloyds on the stock market $price-lloy result NUM so the price of lloyds is NUM pence
+check the price of tesco for me $price-tsco result NUM which means tesco is at NUM pence a share
+how are unilever shares doing today $price-ulvr result NUM so the price of unilever is NUM pence
+whats the lloyds share price today $price-sbry result NUM so lloyds shares are trading at NUM pence
+tell me the current price of shell shares $price-shel result NUM so shell shares are trading at NUM pence
+sell my unilever shares $sell-ulvr result NUM so your unilever shares have been sold at NUM pence
+check the price of unilever for me $price-ulvr result NUM so the price of unilever is NUM pence
+can you get me a quote for barclays $price-barc result NUM so barclays shares are trading at NUM pence
+what is the vodafone share price $price-vod result NUM so the price of vodafone is NUM pence
+give me the latest unilever stock price $price-ulvr result NUM which means unilever is at NUM pence a share
+whats the sainsbury share price today $price-sbry result NUM so sainsbury shares are trading at NUM pence
+i want to sell my shell holding $sell-shel result NUM so your shell shares have been sold at NUM pence
+price check on lloyds please $price-lloy result NUM so the price of lloyds is NUM pence
+tell me the current price of barclays shares $price-barc result NUM so barclays shares are trading at NUM pence
+check the price of vodafone for me $price-vod result NUM so vodafone shares are trading at NUM pence
+how are tesco shares doing today $price-tsco result NUM so tesco shares are trading at NUM pence
+price check on lloyds please $price-shel result NUM so lloyds shares are trading at NUM pence
+i would like to know the vodafone share price $price-vod result NUM so vodafone shares are trading at NUM pence
+get rid of my lloyds shares $sell-lloy result NUM so your lloyds shares have been sold at NUM pence
+how much are bp shares worth $price-bp result NUM so the price of bp is NUM pence
+tell me the current price of vodafone shares $price-vod result NUM so the price of vodafone is NUM pence
+how much are bp shares worth $price-bp result NUM so bp shares are trading at NUM pence
+i want to sell my barclays holding $sell-barc result NUM so your barclays shares have been sold at NUM pence
+whats the barclays share price today $price-barc result NUM so barclays shares are trading at NUM pence
+check the price of bp for me $price-bp result NUM so bp shares are trading at NUM pence
+give me the latest lloyds stock price $price-lloy result NUM which means lloyds is at NUM pence a share
+look up tesco on the stock market $price-tsco result NUM so tesco shares are trading at NUM pence
+get rid of my vodafone shares $sell-vod result NUM so your vodafone shares have been sold at NUM pence
+what are bp shares trading at $price-bp result NUM which means bp is at NUM pence a share
+what are unilever shares trading at $price-ulvr result NUM so the price of unilever is NUM pence
+give me the latest bp stock price $price-bp result NUM which means bp is at NUM pence a share
+can you get me a quote for barclays $price-barc result NUM so the price of barclays is NUM pence
+tell me the current price of barclays shares $price-ulvr result NUM so barclays shares are trading at NUM pence
+tell me the current price of vodafone shares $price-vod result NUM so vodafone shares are trading at NUM pence
+what are bp shares trading at $price-bp result NUM so bp shares are trading at NUM pence
+can you get me a quote for barclays $price-barc result NUM which means barclays is at NUM pence a share
+how much are shell shares worth $price-shel result NUM so shell shares are trading at NUM pence
+what is the unilever share price $price-ulvr result NUM so the price of unilever is NUM pence
+what is the barclays share price $price-barc result NUM so barclays shares are trading at NUM pence
+what is the barclays share price $price-barc result NUM which means barclays is at NUM pence a share
+give me the latest vodafone stock price $price-vod result NUM which means vodafone is at NUM pence a share
+how are tesco shares doing today $price-tsco result NUM so the price of tesco is NUM pence
+please sell all my vodafone shares now $sell-vod result NUM so your vodafone shares have been sold at NUM pence
+price check on barclays please $price-barc result NUM which means barclays is at NUM pence a share
+give me the latest bp stock price $price-sbry result NUM so bp shares are trading at NUM pence
+can you get me a quote for shell $price-shel result NUM so the price of shell is NUM pence
+tell me the current price of shell shares $price-sbry result NUM so shell shares are trading at NUM pence
+how are lloyds shares doing today $price-lloy result NUM so the price of lloyds is NUM pence
+give me the latest sainsbury stock price $price-sbry result NUM which means sainsbury is at NUM pence a share
+what are barclays shares trading at $price-barc result NUM which means barclays is at NUM pence a share
+how are bp shares doing today $price-bp result NUM so bp shares are trading at NUM pence
+how are shell shares doing today $price-shel result NUM so shell shares are trading at NUM pence
+tell me the current price of bp shares $price-bp result NUM so bp shares are trading at NUM pence
+check the price of vodafone for me $price-vod result NUM which means vodafone is at NUM pence a share
+please sell all my sainsbury shares now $sell-sbry result NUM so your sainsbury shares have been sold at NUM pence
+i would like to know the unilever share price $price-ulvr result NUM so the price of unilever is NUM pence
+i want to sell my unilever holding $sell-ulvr result NUM so your unilever shares have been sold at NUM pence
+how are barclays shares doing today $price-barc result NUM so barclays shares are trading at NUM pence
+what are vodafone shares trading at $price-vod result NUM so the price of vodafone is NUM pence
+how much are barclays shares worth $price-barc result NUM so the price of barclays is NUM pence
+i would like to know the sainsbury share price $price-sbry result NUM so sainsbury shares are trading at NUM pence
+price check on sainsbury please $price-sbry result NUM which means sainsbury is at NUM pence a share
+price check on tesco please $price-bp result NUM so tesco shares are trading at NUM pence
+check the price of lloyds for me $price-lloy result NUM which means lloyds is at NUM pence a share
+look up unilever on the stock market $price-ulvr result NUM so the price of unilever is NUM pence
+what are barclays shares trading at $price-barc result NUM so the price of barclays is NUM pence
+tell me the current price of tesco shares $price-tsco result NUM so the price of tesco is NUM pence
+i want to sell my sainsbury holding $sell-sbry result NUM so your sainsbury shares have been sold at NUM pence
+how much are bp shares worth $price-bp result NUM which means bp is at NUM pence a share
+can you get me a quote for unilever $price-ulvr result NUM which means unilever is at NUM pence a share
+how are vodafone shares doing today $price-vod result NUM so the price of vodafone is NUM pence
+what is the tesco share price $price-tsco result NUM so the price of tesco is NUM pence
+what is the unilever share price $price-shel result NUM so unilever shares are trading at NUM pence
+how much are lloyds shares worth $price-lloy result NUM which means lloyds is at NUM pence a share
+look up sainsbury on the stock market $price-sbry result NUM so the price of sainsbury is NUM pence
+how are tesco shares doing today $price-tsco result NUM which means tesco is at NUM pence a share
+what are tesco shares trading at $price-tsco result NUM so the price of tesco is NUM pence
+can you get me a quote for unilever $price-ulvr result NUM so the price of unilever is NUM pence
+look up lloyds on the stock market $price-lloy result NUM which means lloyds is at NUM pence a share
+how are vodafone shares doing today $price-vod result NUM so vodafone shares are trading at NUM pence
+get rid of my bp shares $sell-bp result NUM so your bp shares have been sold at NUM pence
+look up barclays on the stock market $price-barc result NUM which means barclays is at NUM pence a share
+what is the lloyds share price $price-lloy result NUM so the price of lloyds is NUM pence
+look up vodafone on the stock market $price-vod result NUM so vodafone shares are trading at NUM pence
+i would like to know the lloyds share price $price-lloy result NUM so the price of lloyds is NUM pence
+i would like to know the sainsbury share price $price-sbry result NUM so the price of sainsbury is NUM pence
+sell my barclays shares $sell-barc result NUM so your barclays shares have been sold at NUM pence
+how much are vodafone shares worth $price-vod result NUM so vodafone shares are trading at NUM pence
+what is the barclays share price $price-barc result NUM so the price of barclays is NUM pence
+look up unilever on the stock market $price-bp result NUM so unilever shares are trading at NUM pence
+check the price of lloyds for me $price-lloy result NUM so lloyds shares are trading at NUM pence
+can you get me a quote for bp $price-bp result NUM so bp shares are trading at NUM pence
+what are unilever shares trading at $price-ulvr result NUM which means unilever is at NUM pence a share
+what is the vodafone share price $price-vod result NUM so vodafone shares are trading at NUM pence
+price check on tesco please $price-bp result NUM so tesco shares are trading at NUM pence
+how much are sainsbury shares worth $price-sbry result NUM which means sainsbury is at NUM pence a share
+i would like to know the tesco share price $price-tsco result NUM so the price of tesco is NUM pence
+what are sainsbury shares trading at $price-sbry result NUM which means sainsbury is at NUM pence a share
+can you get me a quote for bp $price-bp result NUM which means bp is at NUM pence a share
+what are bp shares trading at $price-bp result NUM so the price of bp is NUM pence
+i would like to know the vodafone share price $price-lloy result NUM so vodafone shares are trading at NUM pence
+how much are sainsbury shares worth $price-sbry result NUM so the price of sainsbury is NUM pence
+what are vodafone shares trading at $price-vod result NUM so vodafone shares are trading at NUM pence
+i would like to know the barclays share price $price-barc result NUM so the price of barclays is NUM pence
+how are barclays shares doing today $price-barc result NUM so the price of barclays is NUM pence
+what are lloyds shares trading at $price-lloy result NUM so the price of lloyds is NUM pence
+can you get me a quote for vodafone $price-vod result NUM which means vodafone is at NUM pence a share
+get rid of my tesco shares $sell-tsco result NUM so your tesco shares have been sold at NUM pence
+tell me the current price of shell shares $price-shel result NUM so the price of shell is NUM pence
+can you get me a quote for vodafone $price-vod result NUM so vodafone shares are trading at NUM pence
+what are lloyds shares trading at $price-lloy result NUM so lloyds shares are trading at NUM pence
+tell me the current price of lloyds shares $price-lloy result NUM so lloyds shares are trading at NUM pence
+can you get me a quote for tesco $price-tsco result NUM which means tesco is at NUM pence a share
+please sell all my lloyds shares now $sell-lloy result NUM so your lloyds shares have been sold at NUM pence
+look up shell on the stock market $price-shel result NUM so the price of shell is NUM pence
+what are unilever shares trading at $price-bp result NUM so unilever shares are trading at NUM pence
+what is the bp share price $price-bp result NUM so bp shares are trading at NUM pence
+how much are vodafone shares worth $price-vod result NUM so the price of vodafone is NUM pence
+i want to sell my bp holding $sell-bp result NUM so your bp shares have been sold at NUM pence
+how are bp shares doing today $price-bp result NUM which means bp is at NUM pence a share
+whats the bp share price today $price-bp result NUM so bp shares are trading at NUM pence
+price check on lloyds please $price-lloy result NUM so lloyds shares are trading at NUM pence
+what is the lloyds share price $price-lloy result NUM which means lloyds is at NUM pence a share
+i would like to know the bp share price $price-bp result NUM so bp shares are trading at NUM pence
+tell me the current price of shell shares $price-shel result NUM which means shell is at NUM pence a share
+tell me the current price of tesco shares $price-tsco result NUM so tesco shares are trading at NUM pence
+what are sainsbury shares trading at $price-sbry result NUM so the price of sainsbury is NUM pence
+i would like to know the tesco share price $price-tsco result NUM so tesco shares are trading at NUM pence
+look up vodafone on the stock market $price-vod result NUM which means vodafone is at NUM pence a share
+get rid of my sainsbury shares $sell-sbry result NUM so your sainsbury shares have been sold at NUM pence
+whats the sainsbury share price today $price-sbry result NUM so the price of sainsbury is NUM pence
+what is the sainsbury share price $price-sbry result NUM so the price of sainsbury is NUM pence
+what are tesco shares trading at $price-tsco result NUM so tesco shares are trading at NUM pence
+tell me the current price of lloyds shares $price-lloy result NUM which means lloyds is at NUM pence a share
+how much are vodafone shares worth $price-vod result NUM which means vodafone is at NUM pence a share
+price check on tesco please $price-tsco result NUM so the price of tesco is NUM pence
+how much are lloyds shares worth $price-lloy result NUM so lloyds shares are trading at NUM pence
+look up tesco on the stock market $price-tsco result NUM so the price of tesco is NUM pence
+give me the latest tesco stock price $price-tsco result NUM so the price of tesco is NUM pence
+how are sainsbury shares doing today $price-sbry result NUM which means sainsbury is at NUM pence a share
+whats the bp share price today $price-bp result NUM which means bp is at NUM pence a share
+look up sainsbury on the stock market $price-sbry result NUM which means sainsbury is at NUM pence a share
+check the price of barclays for me $price-barc result NUM so barclays shares are trading at NUM pence
+please sell all my unilever shares now $sell-ulvr result NUM so your unilever shares have been sold at NUM pence
+tell me the current price of unilever shares $price-ulvr result NUM so unilever shares are trading at NUM pence
+what is the sainsbury share price $price-vod result NUM so sainsbury shares are trading at NUM pence
+price check on shell please $price-shel result NUM so the price of shell is NUM pence
+check the price of barclays for me $price-barc result NUM so the price of barclays is NUM pence
+what are barclays shares trading at $price-barc result NUM so barclays shares are trading at NUM pence
+check the price of tesco for me $price-tsco result NUM so tesco shares are trading at NUM pence
+how are barclays shares doing today $price-barc result NUM which means barclays is at NUM pence a share
+check the price of shell for me $price-shel result NUM so shell shares are trading at NUM pence
+whats the sainsbury share price today $price-sbry result NUM which means sainsbury is at NUM pence a share
+how much are barclays shares worth $price-barc result NUM which means barclays is at NUM pence a share
+i would like to know the sainsbury share price $price-sbry result NUM which means sainsbury is at NUM pence a share
+give me the latest shell stock price $price-shel result NUM so shell shares are trading at NUM pence
+tell me the current price of vodafone shares $price-shel result NUM so vodafone shares are trading at NUM pence
+give me the latest unilever stock price $price-ulvr result NUM so the price of unilever is NUM pence
+sell my tesco shares $sell-tsco result NUM so your tesco shares have been sold at NUM pence
+tell me the current price of lloyds shares $price-sbry result NUM so lloyds shares are trading at NUM pence
+give me the latest tesco stock price $price-tsco result NUM which means tesco is at NUM pence a share
+look up shell on the stock market $price-shel result NUM which means shell is at NUM pence a share
+what are bp shares trading at $price-tsco result NUM so bp shares are trading at NUM pence
+i would like to know the sainsbury share price $price-lloy result NUM so sainsbury shares are trading at NUM pence
+how much are shell shares worth $price-shel result NUM so the price of shell is NUM pence
+what are barclays shares trading at $price-vod result NUM so barclays shares are trading at NUM pence
+give me the latest barclays stock price $price-barc result NUM so barclays shares are trading at NUM pence
+look up sainsbury on the stock market $price-sbry result NUM so sainsbury shares are trading at NUM pence
+whats the lloyds share price today $price-lloy result NUM so lloyds shares are trading at NUM pence
+i would like to know the shell share price $price-shel result NUM so shell shares are trading at NUM pence
+look up bp on the stock market $price-bp result NUM so bp shares are trading at NUM pence
+what are tesco shares trading at $price-tsco result NUM which means tesco is at NUM pence a share
+check the price of sainsbury for me $price-sbry result NUM which means sainsbury is at NUM pence a share
+whats the unilever share price today $price-ulvr result NUM so unilever shares are trading at NUM pence
+can you get me a quote for lloyds $price-lloy result NUM so lloyds shares are trading at NUM pence
+whats the lloyds share price today $price-lloy result NUM so the price of lloyds is NUM pence
+can you get me a quote for shell $price-shel result NUM so shell shares are trading at NUM pence
+what is the tesco share price $price-tsco result NUM so tesco shares are trading at NUM pence
+check the price of bp for me $price-bp result NUM so the price of bp is NUM pence
+i would like to know the bp share price $price-bp result NUM which means bp is at NUM pence a share
+what is the shell share price $price-shel result NUM which means shell is at NUM pence a share
+how much are shell shares worth $price-shel result NUM which means shell is at NUM pence a share
+how much are tesco shares worth $price-tsco result NUM which means tesco is at NUM pence a share
+what is the lloyds share price $price-lloy result NUM so lloyds shares are trading at NUM pence
+what is the sainsbury share price $price-barc result NUM so sainsbury shares are trading at NUM pence
+look up lloyds on the stock market $price-lloy result NUM so lloyds shares are trading at NUM pence
+i want to sell my lloyds holding $sell-lloy result NUM so your lloyds shares have been sold at NUM pence
+how much are tesco shares worth $price-tsco result NUM so tesco shares are trading at NUM pence
+tell me the current price of unilever shares $price-ulvr result NUM which means unilever is at NUM pence a share
+look up unilever on the stock market $price-ulvr result NUM which means unilever is at NUM pence a share
+can you get me a quote for sainsbury $price-sbry result NUM so the price of sainsbury is NUM pence
+sell my lloyds shares $sell-lloy result NUM so your lloyds shares have been sold at NUM pence
+price check on unilever please $price-ulvr result NUM so unilever shares are trading at NUM pence
+look up shell on the stock market $price-shel result NUM so shell shares are trading at NUM pence
+whats the tesco share price today $price-tsco result NUM so the price of tesco is NUM pence
+whats the shell share price today $price-shel result NUM which means shell is at NUM pence a share
+how are shell shares doing today $price-shel result NUM so the price of shell is NUM pence
+tell me the current price of barclays shares $price-barc result NUM so the price of barclays is NUM pence
+what are unilever shares trading at $price-ulvr result NUM so unilever shares are trading at NUM pence
+price check on bp please $price-bp result NUM so the price of bp is NUM pence
+give me the latest sainsbury stock price $price-sbry result NUM so the price of sainsbury is NUM pence
+check the price of sainsbury for me $price-sbry result NUM so sainsbury shares are trading at NUM pence
+how are shell shares doing today $price-shel result NUM which means shell is at NUM pence a share
+what are shell shares trading at $price-shel result NUM which means shell is at NUM pence a share
+look up tesco on the stock market $price-tsco result NUM which means tesco is at NUM pence a share
+how are sainsbury shares doing today $price-sbry result NUM so sainsbury shares are trading at NUM pence
+whats the tesco share price today $price-tsco result NUM which means tesco is at NUM pence a share
+what is the bp share price $price-bp result NUM so the price of bp is NUM pence
+get rid of my shell shares $sell-shel result NUM so your shell shares have been sold at NUM pence
+i would like to know the vodafone share price $price-vod result NUM which means vodafone is at NUM pence a share
+can you get me a quote for unilever $price-ulvr result NUM so unilever shares are trading at NUM pence
+give me the latest lloyds stock price $price-lloy result NUM so the price of lloyds is NUM pence
+i would like to know the lloyds share price $price-lloy result NUM which means lloyds is at NUM pence a share
+how much are unilever shares worth $price-ulvr result NUM which means unilever is at NUM pence a share
+price check on bp please $price-bp result NUM which means bp is at NUM pence a share
+what is the vodafone share price $price-vod result NUM which means vodafone is at NUM pence a share
+how are lloyds shares doing today $price-lloy result NUM so lloyds shares are trading at NUM pence
+give me the latest shell stock price $price-shel result NUM which means shell is at NUM pence a share
+whats the vodafone share price today $price-vod result NUM so vodafone shares are trading at NUM pence
+price check on bp please $price-sbry result NUM so bp shares are trading at NUM pence
+how are sainsbury shares doing today $price-sbry result NUM so the price of sainsbury is NUM pence
+how much are unilever shares worth $price-ulvr result NUM so the price of unilever is NUM pence
+give me the latest barclays stock price $price-barc result NUM so the price of barclays is NUM pence
+whats the shell share price today $price-shel result NUM so the price of shell is NUM pence

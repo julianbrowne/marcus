@@ -31,6 +31,8 @@ In the app, **ask** (next to raw, clean and profile) takes a question such as "w
 
 **ask > instruction** shows why "make no mistakes" is not a directive: each word's weight in the averaged vector, the nearest words, and the cosine similarity with a comparison phrase ("make mistakes": 0.959 on the 67 books), with both points on the map. It uses the gutenberg-67-books space, which keeps 8,000 words so that mistakes, error and correct are included. An optional **Instruction** in the sidebar is placed before each generated or navigated sentence; the navigator marks which words are inside the n-word context window and shows that once the instruction slides out, the next-word options are identical with or without it. If the corpus never saw a context, the chain backs off to its longest seen tail.
 
+**The harness** shows that agent actions are ordinary code reacting to predicted words. When the chain emits a word starting with `$` (e.g. `$price-tsco`), a small harness (`src/harness.js`) intercepts it, looks the tool up in a hard-coded registry of fake tools, and fills the `NUM` placeholders that follow with the result, shown apart from the chain's own words in both the generator and the navigator. The fake sell tool is refused unless **allow the sell tool** is ticked; unknown tools fail with an error. With the `share-prices` corpus, low orders often call the wrong ticker (the chain sees only "share price", not the company) and higher orders mostly don't.
+
 In the app, **navigate** (next to graph and table) walks the chain by hand: pick a sentence starter, or type words to start mid-sentence, then pick each next word from those that followed the same context in the corpus, with the context words highlighted, until the sentence ends.
 
 In the app, **analyse** (in the Generated text card) loads wink-nlp on demand and measures the generated text the same way, one column per context length, beside the corpus's own figures.
@@ -56,6 +58,8 @@ General-purpose texts for testing clustering (sources and licences in [`src/corp
 `moby-dick.txt` - *Moby Dick* by Herman Melville, from Project Gutenberg
 
 `gutenberg-67-books.txt` - ~50 MB: 67 popular public domain books from Project Gutenberg in one file (Moby Dick is the first), for trying a really big corpus. Recreate or resize with `node scripts/fetch-gutenberg.mjs [count]` (writes `src/corpus/raw/gutenberg-67-books.txt`; it waits 2s between downloads, per Gutenberg's robot policy)
+
+`share-prices.txt` - **synthetic** (see `scripts/make-share-prices.mjs`): share-price questions followed by tool tokens such as `$price-tsco`, for the harness demo. Made up because no real text pairs questions with tool calls
 
 `tinystories.txt` - ~3 MB of simple-vocabulary children's stories (CDLA-Sharing-1.0)
 

@@ -1,6 +1,8 @@
 import {useState} from 'react';
 import {RotateCcw, Undo2} from 'lucide-react';
 import InstructionCaption from './InstructionCaption';
+import HarnessCall from './HarnessCall';
+import {applyHarness} from './harness';
 
 const START_WORDS = 500; // sentence starters offered
 const MAX_OPTIONS = 60; // next words shown at once (the rest are summarised)
@@ -17,8 +19,9 @@ const sameOptions = (a, b) =>
   a.options.every((o, i) => o.word === b.options[i].word && o.count === b.options[i].count);
 
 // Walk the chain by hand: pick a start, then one of the words that followed the same context in the corpus.
-// instruction: words placed before the sentence (from the sidebar), to show they only matter while in the window
-export default function Navigator({marcus, instruction = []}) {
+// instruction: words placed before the sentence (from the sidebar), to show they only matter while in the window;
+// permissions: what the harness may do when the chain emits a tool token ({allowSell})
+export default function Navigator({marcus, instruction = [], permissions = {allowSell: false}}) {
   const [path, setPath] = useState([]); // words chosen so far
   const [atStart, setAtStart] = useState(true); // did the path begin a sentence?
   const [ended, setEnded] = useState(false);
@@ -39,6 +42,7 @@ export default function Navigator({marcus, instruction = []}) {
     // typed words from anywhere in a sentence, if the chain knows what follows them
     const words = resolve(marcus, typed);
     const phrase = words.length && !words.includes(null) && marcus.followers(words, false).total > 0 ? words : null;
+    const unknown = typed.trim().split(/\s+/).filter((w, i) => w && words[i] === null);
     return (
       <>
         <p className="hint">
@@ -54,6 +58,12 @@ export default function Navigator({marcus, instruction = []}) {
         )}
         <input type="search" className="nav-input" placeholder="starting words" aria-label="starting words"
           value={typed} onChange={(e) => setTyped(e.target.value)} />
+        {unknown.length > 0 && (
+          <p className="dead-end">
+            Dead end: “{unknown.join(' ')}” {unknown.length === 1 ? 'is' : 'are'} not in this chain, so there is nothing to
+            continue from. The word space can’t offer a substitute either: it only has vectors for words it has seen.
+          </p>
+        )}
         <div className="scroll chips-area">
           {phrase && (
             <div className="chips">
@@ -85,6 +95,9 @@ export default function Navigator({marcus, instruction = []}) {
   // instruction words inside the n-word window (before any backoff): while there are any, the window
   // also no longer starts at the sentence start, so the options differ even if backoff skips them
   const instructionInWindow = Math.max(0, before.length - (full.length - marcus.order));
+  // the harness reads the chain's words: tool tokens run, and NUM shows the latest result
+  const harnessed = applyHarness(full, permissions);
+  const calls = harnessed.filter((t) => t.kind === 'call');
   const shown = next.options.slice(0, MAX_OPTIONS);
   const rest = next.options.slice(MAX_OPTIONS);
   const restCount = rest.reduce((s, o) => s + o.count, 0);
@@ -93,10 +106,22 @@ export default function Navigator({marcus, instruction = []}) {
     <>
       <p className="sentence" aria-label="sentence so far">
         {full.map((w, i) => (
-          <span key={i}>{i > 0 && ' '}<span className={[i < before.length && 'instruction', i >= contextFrom && 'context'].filter(Boolean).join(' ') || undefined}>{w}</span></span>
+          <span key={i}>
+            {i > 0 && ' '}
+            <span className={[i < before.length && 'instruction', i >= contextFrom && 'context', harnessed[i].kind === 'filled' && 'harness-filled', harnessed[i].kind === 'unfilled' && 'harness-unfilled'].filter(Boolean).join(' ') || undefined}
+              title={{filled: 'NUM, filled in by the harness', unfilled: 'no tool call before it: the harness has nothing to fill it with'}[harnessed[i].kind]}>
+              {harnessed[i].word}
+            </span>
+          </span>
         ))}
         {ended && <span className="stop">.</span>}
       </p>
+      {calls.length > 0 && (
+        <div className="harness-calls">
+          <p className="hint">The chain predicted a tool token; the harness (ordinary code) intercepted it:</p>
+          {calls.map((t, i) => <HarnessCall key={i} call={t.call} />)}
+        </div>
+      )}
       {without && !ended && (
         <p className={`window-status ${sameOptions(next, without) ? 'same' : 'different'}`}>
           {sameOptions(next, without)

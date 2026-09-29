@@ -1076,3 +1076,84 @@ input[aria-invalid="true"] {
 .space-map .query.comparison rect {
   fill: var(--pos-adjective);
 }
+
+/* ---------- harness: ordinary code, shown apart from the chain's predicted words ---------- */
+
+.harness {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0;
+  padding: 8px 12px;
+  border: 1px dashed var(--foreground);
+  border-radius: calc(var(--radius) - 4px);
+  background: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.harness.failed {
+  border-color: var(--tone-negative);
+}
+
+.harness-label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+}
+
+.harness.failed .harness-label {
+  color: var(--tone-negative);
+}
+
+.harness code {
+  font-weight: 600;
+}
+
+.harness-filled {
+  padding: 0 4px;
+  border: 1px dashed var(--foreground);
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+}
+
+.harness-unfilled {
+  padding: 0 4px;
+  border: 1px dashed var(--tone-negative);
+  border-radius: 4px;
+  color: var(--tone-negative);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+}
+
+.harness-calls {
+  margin-bottom: 12px;
+}
+
+.harness-calls .hint {
+  margin-bottom: 4px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.checkbox input {
+  width: auto;
+  height: auto;
+  box-shadow: none;
+}
+
+.dead-end {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--tone-negative);
+  background: var(--muted);
+  font-size: 13px;
+}

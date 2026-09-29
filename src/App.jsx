@@ -1,6 +1,8 @@
 import {useState} from 'react';
 import {Blocks, Eraser, FlaskConical, ScanText, Sparkles, Waypoints, X} from 'lucide-react';
 import InstructionCaption from './InstructionCaption';
+import HarnessCall from './HarnessCall';
+import {applyHarness} from './harness';
 import {Markov, MAX_ORDER} from './markov';
 import WordMap from './WordMap';
 import ChainTable from './ChainTable';
@@ -85,7 +87,9 @@ const views = {
   graph: (map) => <WordMap map={map} />,
   table: (rows) => <ChainTable rows={rows} />,
   analysis: (data) => <TextAnalysis {...data} />,
-  navigate: (marcus, {instruction}) => <Navigator key={marcus.order} marcus={marcus} instruction={marcus.spell(instruction)} />,
+  navigate: (marcus, {instruction, permissions}) => (
+    <Navigator key={marcus.order} marcus={marcus} instruction={marcus.spell(instruction)} permissions={permissions} />
+  ),
   ask: (space) => <QuestionView space={space} loadSpaceFor={loadSpaceFor} />,
 };
 
@@ -99,23 +103,31 @@ async function analyseGenerated(paragraphs) {
   });
 }
 
-// a generated paragraph: sentence by sentence, with the first `order` words of each (chosen while the
-// instruction was still inside the context window) marked
-function Paragraph({text, order, instruction}) {
-  if (!instruction) return text;
-  const sentences = text.trim().split(/(?<=\.) /);
+// a generated paragraph, sentence by sentence: tool tokens go through the harness (its panel and
+// filled-in results are shown apart from the predicted words), and with an instruction the first
+// `order` words of each sentence (chosen while it was still inside the context window) are marked
+function Paragraph({text, order, instruction, permissions}) {
+  const sentences = text.trim().split(/(?<=\.) /).map((s) => s.replace(/\.$/, '').split(' '));
   return (
     <>
-      <span className="instruction">{instruction}</span>{' '}
-      {sentences.map((sentence, i) => {
-        const words = sentence.split(' ');
-        return (
-          <span key={i}>
-            <span className="in-window">{words.slice(0, order).join(' ')}</span>
-            {words.length > order && ` ${words.slice(order).join(' ')}`}{' '}
-          </span>
-        );
-      })}
+      {instruction && <><span className="instruction">{instruction}</span>{' '}</>}
+      {sentences.map((words, i) => (
+        <span key={i}>
+          {applyHarness(words, permissions).map((t, j) => {
+            const inWindow = instruction && j < order ? 'in-window' : undefined;
+            return (
+              <span key={j}>
+                {j > 0 && ' '}
+                {t.kind === 'call' && <><span className={inWindow}>{t.word}</span> <HarnessCall call={t.call} /></>}
+                {t.kind === 'filled' && <span className="harness-filled" title="filled in by the harness">{t.word}</span>}
+                {t.kind === 'unfilled' && <span className="harness-unfilled" title="no tool call before it: the harness has nothing to fill it with">{t.word}</span>}
+                {t.kind === 'word' && <span className={inWindow}>{t.word}</span>}
+              </span>
+            );
+          })}
+          {'. '}
+        </span>
+      ))}
     </>
   );
 }
@@ -139,6 +151,7 @@ export default function App() {
   const [view, setView] = useState(null); // null (generated text) | {type: a key of views, data} shown in the main pane
   const [profile, setProfile] = useState(null); // headline figures for the selected corpus
   const [instruction, setInstruction] = useState(''); // words placed before each sentence, e.g. "make no mistakes"
+  const [allowSell, setAllowSell] = useState(false); // harness permission for the (fake) sell tool
   const instructionWords = instruction.trim().split(/\s+/).filter(Boolean);
 
   const n = Number(order);
@@ -192,7 +205,7 @@ export default function App() {
 
   function generate() {
     const words = marcus.spell(instructionWords);
-    setParagraphs([...paragraphs, {text: marcus.generate(words), order: marcus.order, instruction: words.join(' ')}]);
+    setParagraphs([...paragraphs, {text: marcus.generate(words), order: marcus.order, instruction: words.join(' '), permissions: {allowSell}}]);
     setView(null); // show it
   }
 
@@ -231,6 +244,10 @@ export default function App() {
             Instruction (optional)
             <input type="text" value={instruction} placeholder="e.g. make no mistakes"
               onChange={(e) => setInstruction(e.target.value)} disabled={!!busy} />
+          </label>
+          <label className="checkbox">
+            <input type="checkbox" checked={allowSell} onChange={(e) => setAllowSell(e.target.checked)} />
+            allow the sell tool (harness permission)
           </label>
           <button className={marcus ? '' : 'cta'} onClick={() => run('build', async () => setMarcus(buildMarkov(await load('clean', corpus), n)))}
             disabled={!corpus || !validOrder || !!busy}>
@@ -281,7 +298,7 @@ export default function App() {
                     <X aria-hidden="true" />
                   </button>
                 </div>
-                {views[view.type](view.data, {instruction: instructionWords})}
+                {views[view.type](view.data, {instruction: instructionWords, permissions: {allowSell}})}
               </section>
             ) : (
               <>
@@ -315,8 +332,11 @@ export default function App() {
                         </p>
                       </>
                     )}
-                    {paragraphs.map(({text, order, instruction}, i) => (
-                      <p key={i}><span className="badge">n={order}</span> <Paragraph text={text} order={order} instruction={instruction} /></p>
+                    {paragraphs.map(({text, order, instruction, permissions}, i) => (
+                      <p key={i}>
+                        <span className="badge">n={order}</span>{' '}
+                        <Paragraph text={text} order={order} instruction={instruction} permissions={permissions} />
+                      </p>
                     ))}
                   </div>
                 </section>
