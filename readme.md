@@ -27,9 +27,9 @@ At build time (and before `npm run dev` / `npm test`), `scripts/prepare-corpora.
 - `src/corpus/profile/<name>.json`: a corpus profile from [wink-nlp](https://github.com/winkjs/wink-nlp) (readability, parts of speech, tone and its arc across the text, common and distinctive words, key sentences, numbers and dates) plus the word map, with each word's part of speech
 - `src/corpus/cache/<name>.json`: build-only content-word counts; distinctive words (BM25) compare every corpus with the others, so they're scored in a final pass over these
 
-In the app, **ask** (next to raw, clean and profile) takes a question such as "what is the capital of france", drops stopwords, weights the remaining words by rarity and averages their vectors from a 2,000-word, 50-dimension space built at build time (PPMI over a +/-4 word window, reduced with PCA; `src/corpus/space/<name>.json`). It lists the 10 nearest words by cosine, maps them with the question, and does analogies (paris - france + italy). This is similarity retrieval over word co-occurrence, not how an LLM generates an answer.
+In the app, **ask** (next to raw, clean and profile) takes a question such as "what is the capital of france", drops stopwords, weights the remaining words by rarity and averages their vectors from a word space built at build time (PPMI over a +/-4 word window, reduced with PCA; `src/corpus/space/<name>.json`). It is offered only for the synthetic `geography` corpus, which is built for it; the other corpora aren't structured for this kind of retrieval. It lists the 10 nearest words by cosine, maps them with the question, and does analogies (paris - france + italy). This is similarity retrieval over word co-occurrence, not how an LLM generates an answer.
 
-**ask > instruction** shows why "make no mistakes" is not a directive: each word's weight in the averaged vector, the nearest words, and the cosine similarity with a comparison phrase ("make mistakes": 0.959 on the 67 books), with both points on the map. It uses the gutenberg-67-books space, which keeps 8,000 words so that mistakes, error and correct are included. An optional **Instruction** in the sidebar is placed before each generated or navigated sentence; the navigator marks which words are inside the n-word context window and shows that once the instruction slides out, the next-word options are identical with or without it. If the corpus never saw a context, the chain backs off to its longest seen tail.
+**ask > instruction** (select the geography corpus, then ask) shows why "make no mistakes" is not a directive: each word's weight in the averaged vector, the nearest words, and the cosine similarity with a comparison phrase ("make mistakes": 0.959 on the 67 books), with both points on the map. It uses the gutenberg-67-books space, which keeps 8,000 words so that mistakes, error and correct are included. An optional **Instruction** in the sidebar is placed before each generated or navigated sentence; the navigator marks which words are inside the n-word context window and shows that once the instruction slides out, the next-word options are identical with or without it. If the corpus never saw a context, the chain backs off to its longest seen tail.
 
 **The harness** shows that agent actions are ordinary code reacting to predicted words. When the chain emits a word starting with `$` (e.g. `$price-tsco`), a small harness (`src/harness.js`) intercepts it, looks the tool up in a hard-coded registry of fake tools, and fills the `NUM` placeholders that follow with the result, shown apart from the chain's own words in both the generator and the navigator. The fake sell tool is refused unless **allow the sell tool** is ticked; unknown tools fail with an error. With the `share-prices` corpus, low orders often call the wrong ticker (the chain sees only "share price", not the company) and higher orders mostly don't.
 
@@ -53,7 +53,7 @@ General-purpose texts for testing clustering (sources and licences in [`src/corp
 
 `aesop.txt`, `alice.txt`, `pride-and-prejudice.txt`, `sherlock-holmes.txt` - public domain books from Project Gutenberg
 
-`geography.txt` - ~2 MB of Wikipedia: every sovereign state and its capital (CC BY-SA 4.0), for the ask feature. Recreate with `node scripts/fetch-wikipedia.mjs [count]`
+`geography.txt` - **synthetic** (see `scripts/make-geography.mjs`): factual sentences about 74 countries and their capitals, structured so that the ask feature answers every "capital of X" question and analogy. Made up because real text lacks the consistent structure this retrieval method needs
 
 `moby-dick.txt` - *Moby Dick* by Herman Melville, from Project Gutenberg
 
@@ -63,7 +63,6 @@ General-purpose texts for testing clustering (sources and licences in [`src/corp
 
 `tinystories.txt` - ~3 MB of simple-vocabulary children's stories (CDLA-Sharing-1.0)
 
-`wikitext-2.txt` - the WikiText-2 language-modelling benchmark, from Wikipedia (CC BY-SA)
 
 ## Tests
 

@@ -133,3 +133,31 @@ describe('questions and analogies over a windowed word space', async () => {
     expect(analogy(space, 'paris', 'france', 'narnia').unknown).toEqual(['narnia']);
   });
 });
+
+test('the synthetic geography corpus answers every "capital of X" question and analogy', async () => {
+  const {clean} = await import('../src/textprep');
+  const {contextPairs} = await import('../src/embed');
+  const {loadSpace, queryVector, nearest, analogy} = await import('../src/question');
+  const {geographyCorpus, PAIRS} = await import('../scripts/make-geography.mjs');
+  const {SPACES} = await import('../scripts/space-settings.mjs');
+  const settings = SPACES.geography; // exactly as the build makes it
+  const lines = clean(geographyCorpus()).split('\n').map((l) => l.split(' '));
+  const points = embed(contextPairs(lines, settings.window), settings);
+  const space = loadSpace({
+    words: points.map((p) => p.word), counts: points.map((p) => p.count),
+    dims: points[0].vector.length, vectors: points.flatMap((p) => p.vector),
+  });
+  const wrong = [];
+  for (const [country, capital] of PAIRS) {
+    const q = queryVector(space, `what is the capital of ${country}`);
+    const top = nearest(space, q.vector, 1, q.used.map((u) => u.word))[0].word;
+    if (top !== capital.toLowerCase()) wrong.push(`${country}: ${top}`);
+  }
+  expect(wrong).toEqual([]);
+  // a spread of analogies: every capital - its country, + every 5th other country
+  for (const [c1, k1] of PAIRS) {
+    for (const [c2, k2] of PAIRS.filter((_, i) => i % 5 === 0)) {
+      if (c1 !== c2) expect(analogy(space, k1, c1, c2, 1).results[0].word).toBe(k2.toLowerCase());
+    }
+  }
+});

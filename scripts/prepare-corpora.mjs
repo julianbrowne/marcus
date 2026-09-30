@@ -2,7 +2,7 @@
 //   src/corpus/clean/<name>.txt     one clean sentence per line (what the Markov chain reads)
 //   src/corpus/profile/<name>.json  corpus profile + word map points with parts of speech
 //   src/corpus/cache/<name>.json    content-word counts (build-only), for distinctive words
-//   src/corpus/space/<name>.json    word vectors (2000 words x 50 dims, +/-4 word window) for asking questions
+//   src/corpus/space/<name>.json    word vectors for asking questions, for the corpora in space-settings.mjs
 //
 // Distinctive words compare every corpus with the others, so they're scored in a final
 // pass over all the cached counts and written into each profile.
@@ -17,21 +17,18 @@ import {clean, prepare} from '../src/textprep.js';
 import {Markov} from '../src/markov.js';
 import {embed, contextPairs} from '../src/embed.js';
 import {analyse, neighbourAgreement, distinctiveWords} from '../src/analyse.js';
+import {SPACES as SPACE_SETTINGS} from './space-settings.mjs';
 
 const MAP_WORDS = 500; // words on the word map
-// the question space: associated words (a +/-4 word window groups paris with france), many dimensions
-// for similarity. Building it takes 1-2s (26s for the 67 books), so it's done here, not in the browser
-const SPACE = {window: 4, rows: 2000, cols: 500, dims: 50};
-// the instruction demo ("make no mistakes") runs on the 67 books; words like mistakes/error/correct
-// rank 2,500-7,000 there, so its space keeps 8,000 words (others stay at 2,000 to keep files small)
-const SPACE_ROWS = {'gutenberg-67-books': 8000};
+// word spaces (+/-4 word window: groups paris with france), only for the corpora that use them.
+// Building one takes 1-2s (26s for the 67 books), so it's done here, not in the browser
 const dir = (name) => new URL(`../src/corpus/${name}/`, import.meta.url);
 const RAW = dir('raw');
 const CLEAN = dir('clean');
 const PROFILE = dir('profile');
 const CACHE = dir('cache');
 const SPACES = dir('space');
-const CODE = ['../src/textprep.js', '../src/markov.js', '../src/embed.js', '../src/analyse.js', './prepare-corpora.mjs']
+const CODE = ['../src/textprep.js', '../src/markov.js', '../src/embed.js', '../src/analyse.js', './prepare-corpora.mjs', './space-settings.mjs']
   .map((f) => new URL(f, import.meta.url));
 
 const force = process.argv.includes('--force');
@@ -43,10 +40,11 @@ mkdirSync(PROFILE, {recursive: true});
 mkdirSync(CACHE, {recursive: true});
 mkdirSync(SPACES, {recursive: true});
 
-// remove outputs whose raw file has gone (renamed or deleted corpora)
+// remove outputs whose raw file has gone (renamed or deleted corpora), and spaces no longer wanted
 const names = new Set(readdirSync(RAW).filter((f) => f.endsWith('.txt')).map((f) => f.replace(/\.txt$/, '')));
-for (const [folder, ext] of [[CLEAN, '.txt'], [PROFILE, '.json'], [CACHE, '.json'], [SPACES, '.json']]) {
-  for (const f of readdirSync(folder).filter((f) => f.endsWith(ext) && !names.has(f.slice(0, -ext.length)))) {
+const spaced = new Set([...names].filter((n) => n in SPACE_SETTINGS));
+for (const [folder, ext, keep] of [[CLEAN, '.txt', names], [PROFILE, '.json', names], [CACHE, '.json', names], [SPACES, '.json', spaced]]) {
+  for (const f of readdirSync(folder).filter((f) => f.endsWith(ext) && !keep.has(f.slice(0, -ext.length)))) {
     rmSync(new URL(f, folder));
     console.log(`removed stale ${f}`);
   }
@@ -60,7 +58,8 @@ for (const file of readdirSync(RAW).filter((f) => f.endsWith('.txt')).sort()) {
   const cacheOut = new URL(`${name}.json`, CACHE);
   const spaceOut = new URL(`${name}.json`, SPACES);
   const inputsTime = Math.max(mtime(raw), codeTime);
-  if (!force && Math.min(mtime(cleanOut), mtime(profileOut), mtime(cacheOut), mtime(spaceOut)) > inputsTime) continue;
+  const outputs = [cleanOut, profileOut, cacheOut, ...(spaced.has(name) ? [spaceOut] : [])];
+  if (!force && Math.min(...outputs.map(mtime)) > inputsTime) continue;
 
   const started = performance.now();
   const text = readFileSync(raw, 'utf8');
@@ -75,15 +74,18 @@ for (const file of readdirSync(RAW).filter((f) => f.endsWith('.txt')).sort()) {
   const points = embed(markov.pairs(), {rows: MAP_WORDS}).map((p) => ({...p, pos: posOf.get(p.word) ?? null}));
 
   const lines = cleaned.split('\n');
-  const space = embed(contextPairs(lines.map((l) => l.split(' ')), SPACE.window), {...SPACE, rows: SPACE_ROWS[name] ?? SPACE.rows});
-  const round = (x) => Math.round(x * 1000) / 1000;
-  writeFileSync(spaceOut, JSON.stringify({
-    window: SPACE.window,
-    dims: space[0]?.vector.length ?? 0,
-    words: space.map((p) => p.word),
-    counts: space.map((p) => p.count),
-    vectors: space.flatMap((p) => p.vector.map(round)), // unit vectors, row after row
-  }));
+  if (spaced.has(name)) {
+    const settings = SPACE_SETTINGS[name];
+    const space = embed(contextPairs(lines.map((l) => l.split(' ')), settings.window), settings);
+    const round = (x) => Math.round(x * 1000) / 1000;
+    writeFileSync(spaceOut, JSON.stringify({
+      window: settings.window,
+      dims: space[0]?.vector.length ?? 0,
+      words: space.map((p) => p.word),
+      counts: space.map((p) => p.count),
+      vectors: space.flatMap((p) => p.vector.map(round)), // unit vectors, row after row
+    }));
+  }
   writeFileSync(profileOut, JSON.stringify({
     name,
     rawChars: text.length,

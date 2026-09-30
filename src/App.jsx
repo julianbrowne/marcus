@@ -31,6 +31,9 @@ const loadSpaceFor = async (name) => {
   return spaces.get(name);
 };
 
+// ask works on the synthetic geography corpus, whose pairs are built for it; other corpora aren't
+const ASK_CORPUS = 'geography';
+
 // the table only models the most frequent contexts
 const TOP_WORDS = 500;
 
@@ -229,7 +232,7 @@ export default function App() {
               {CORPORA.map((name) => <option key={name} value={name}>{name}</option>)}
             </select>
           </label>
-          <SegmentedButtons label="view corpus" options={['raw', 'clean', 'profile', 'ask']} active={view?.type}
+          <SegmentedButtons label="view corpus" options={corpus === ASK_CORPUS ? ['raw', 'clean', 'profile', 'ask'] : ['raw', 'clean', 'profile']} active={view?.type}
             disabled={!corpus || !!busy} onSelect={toggle} />
         </section>
 

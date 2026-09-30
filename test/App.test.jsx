@@ -72,7 +72,7 @@ test('the sidebar has corpus and chain sections, divided, with generate and clea
   expect(chainSection.classList.contains('divided')).toBe(true);
   const chainButtons = [...chainSection.querySelectorAll('button')].map((b) => b.textContent.trim());
   expect(chainButtons).toEqual(['build', 'graph', 'table', 'navigate', 'generate', 'clear']);
-  expect(parts('view corpus').map((b) => b.textContent)).toEqual(['raw', 'clean', 'profile', 'ask']);
+  expect(parts('view corpus').map((b) => b.textContent)).toEqual(['raw', 'clean', 'profile']); // ask: geography only
   expect(parts('view chain').map((b) => b.textContent)).toEqual(['graph', 'table', 'navigate']);
 });
 
@@ -451,41 +451,57 @@ test('navigate walks the chain by hand from a start word to the end of a sentenc
   expect(chips().map((c) => c.textContent)).toContain('bird 100%'); // the early bird catches the worm
 });
 
-test('ask retrieves the nearest words to a question and to an analogy, and maps them', async () => {
+test('ask is offered only for the geography corpus', async () => {
   render(<App />);
   await selectCorpus('pride-and-prejudice');
+  expect(parts('view corpus').map((b) => b.textContent)).toEqual(['raw', 'clean', 'profile']);
+  await selectCorpus('geography');
+  expect(parts('view corpus').map((b) => b.textContent)).toEqual(['raw', 'clean', 'profile', 'ask']);
+  openView('ask');
+  await findView('Ask a question');
+  await selectCorpus('proverbs'); // leaving geography closes ask and removes its button
+  expect(screen.queryByRole('region', {name: 'Ask a question'})).toBeNull();
+  expect(parts('view corpus').map((b) => b.textContent)).toEqual(['raw', 'clean', 'profile']);
+});
+
+test('ask retrieves the nearest words to a question and to an analogy, and maps them', async () => {
+  render(<App />);
+  await selectCorpus('geography');
   openView('ask');
   const view = await findView('Ask a question');
   expect(view.querySelector('.caption').textContent).toMatch(/similarity retrieval over word co-occurrence, not how an LLM generates an answer/);
-  expect(view.querySelectorAll('.space-map .word-dot')).toHaveLength(2000); // every word in the space
+  const dots = view.querySelectorAll('.space-map .word-dot').length; // every word in the space
+  expect(dots).toBeGreaterThan(200);
   expect(view.querySelector('.space-map .query')).toBeNull(); // nothing asked yet
 
-  fireEvent.change(screen.getByLabelText('ask a question'), {target: {value: 'Who does Elizabeth love? zzyzx'}});
+  fireEvent.change(screen.getByLabelText('ask a question'), {target: {value: 'What is the capital of France? zzyzx'}});
   const answers = [...view.querySelectorAll('.answers li')];
   expect(answers).toHaveLength(10);
+  expect(answers[0].firstChild.textContent.trim()).toBe('paris');
   const scores = answers.map((li) => Number(li.querySelector('small').textContent));
   expect(scores).toEqual([...scores].sort((a, b) => b - a)); // most similar first
   const hint = view.querySelector('.hint').textContent;
-  expect(hint).toMatch(/Asking with elizabeth \(×[\d.]+\) \+ love \(×[\d.]+\)/); // stopwords dropped
+  expect(hint).toMatch(/Asking with capital \(×[\d.]+\) \+ france \(×[\d.]+\)/); // stopwords dropped
   expect(hint).toContain('zzyzx'); // reported as unknown
   // answers and asked words highlighted on the map, plus the question itself
   expect(view.querySelectorAll('.space-map .answer')).toHaveLength(10);
-  expect([...view.querySelectorAll('.space-map .asked text')].map((t) => t.textContent).sort()).toEqual(['elizabeth', 'love']);
+  expect([...view.querySelectorAll('.space-map .asked text')].map((t) => t.textContent).sort()).toEqual(['capital', 'france']);
   expect(view.querySelector('.space-map .query')).not.toBeNull();
 
-  fireEvent.change(screen.getByLabelText('analogy a'), {target: {value: 'elizabeth'}});
-  fireEvent.change(screen.getByLabelText('analogy b'), {target: {value: 'she'}});
-  fireEvent.change(screen.getByLabelText('analogy c'), {target: {value: 'he'}});
+  fireEvent.change(screen.getByLabelText('analogy a'), {target: {value: 'paris'}});
+  fireEvent.change(screen.getByLabelText('analogy b'), {target: {value: 'france'}});
+  fireEvent.change(screen.getByLabelText('analogy c'), {target: {value: 'italy'}});
   const analogyAnswers = [...view.querySelectorAll('.analogy-section .answers li')].map((li) => li.firstChild.textContent.trim());
   expect(analogyAnswers).toHaveLength(10);
-  expect(analogyAnswers).not.toContain('elizabeth'); // inputs excluded
+  expect(analogyAnswers[0]).toBe('rome');
+  expect(analogyAnswers).not.toContain('paris'); // inputs excluded
   fireEvent.change(screen.getByLabelText('analogy c'), {target: {value: 'zzyzx'}});
   expect(view.querySelector('.analogy-section .hint').textContent).toContain('zzyzx');
 });
 
 test(`instruction mode shows each word's weight, both phrases' nearest words, their similarity and both points`, async () => {
   render(<App />);
-  await selectCorpus('proverbs');
+  await selectCorpus('geography'); // ask (and so instruction mode) is geography only
   openView('ask');
   const view = await findView('Ask a question');
   fireEvent.click(within(view).getByRole('button', {name: 'instruction'}));

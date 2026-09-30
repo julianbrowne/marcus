@@ -14,9 +14,10 @@ name the creator and link to the source, for example:
 
 This summary is for convenience only; the licence text below is what applies.
 
-The text corpora in src/corpus are not covered by this licence. They are
-third-party material under their own terms (public domain, CDLA-Sharing-1.0,
-CC BY-SA); see src/corpus/SOURCES.md.
+The third-party text corpora in src/corpus are not covered by this licence;
+they are under their own terms (public domain, CDLA-Sharing-1.0). The
+synthetic ones (geography, share-prices) are part of this project. See
+src/corpus/SOURCES.md.
 
 =======================================================================
 
