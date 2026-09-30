@@ -398,10 +398,12 @@ test('the selected corpus shows its headline figures from the build-time profile
   expect(stats[2].nextSibling.textContent).toMatch(/^\d+$/); // Flesch score
 });
 
-test('the sidebar links to the test report, above the source link', () => {
+test('the sidebar links to the test report, above the source link and the icon credit', () => {
   const {container} = render(<App />);
   const links = [...container.querySelectorAll('.sidebar-footer a')];
-  expect(links.map((a) => a.textContent.trim())).toEqual(['Test report', 'Source on GitHub']);
+  expect(links.map((a) => a.textContent.trim())).toEqual(['Test report', 'Source on GitHub', 'Chain', 'Icons8']);
+  // the Icons8 free licence asks for a visible link for the favicon
+  expect(links.slice(2).map((a) => a.getAttribute('href'))).toEqual(['https://icons8.com/icon/yYT2bg6jaBu2/chain', 'https://icons8.com']);
   expect(links[0].getAttribute('href')).toBe('./tests/index.html'); // relative, so it works under /marcus/ on Pages
   expect(links[0].getAttribute('target')).toBe('_blank');
 });

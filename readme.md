@@ -49,7 +49,7 @@ These folders are generated (and git-ignored); a corpus is only re-prepared when
 
 `BattleCreekDec19_2019.txt` - a single raw, unprocessed speech transcript
 
-General-purpose texts for testing clustering (sources and licences in [`src/corpus/SOURCES.md`](src/corpus/SOURCES.md)):
+General-purpose texts for testing clustering (sources and licences in [SOURCES.md](SOURCES.md)):
 
 `aesop.txt`, `alice.txt`, `pride-and-prejudice.txt`, `sherlock-holmes.txt` - public domain books from Project Gutenberg
 
@@ -76,7 +76,4 @@ Pushing to `master` runs `.github/workflows/pages.yml`, which tests, builds and 
 
 ## License
 
-[CC BY-NC 4.0](LICENSE): free to use, modify and share for non-commercial purposes, with credit to [Marcus by Julian Browne](https://github.com/julianbrowne/marcus). The text corpora in `src/corpus` have their own licences; see [SOURCES.md](src/corpus/SOURCES.md).
-
-
-
+[CC BY-NC 4.0](LICENSE): free to use, modify and share for non-commercial purposes, with credit to [Marcus by Julian Browne](https://github.com/julianbrowne/marcus). Everything else Marcus uses (text corpora, packages, design, font, icons and references) keeps its own licence and is credited in [SOURCES.md](SOURCES.md).

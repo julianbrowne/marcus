@@ -275,6 +275,10 @@ export default function App() {
           <div>
             <a href="https://github.com/julianbrowne/marcus">Source on GitHub</a> · CC BY-NC 4.0
           </div>
+          <div>
+            <a target="_blank" rel="noopener" href="https://icons8.com/icon/yYT2bg6jaBu2/chain">Chain</a> icon
+            by <a target="_blank" rel="noopener" href="https://icons8.com">Icons8</a>
+          </div>
         </footer>
       </aside>
 
