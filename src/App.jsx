@@ -1,7 +1,5 @@
 import {useState} from 'react';
 import {Blocks, Eraser, FlaskConical, ScanText, Sparkles, Waypoints, X} from 'lucide-react';
-import HarnessCall from './HarnessCall';
-import {applyHarness} from './harness';
 import {Markov, MAX_ORDER} from './markov';
 import WordMap from './WordMap';
 import ChainTable from './ChainTable';
@@ -9,6 +7,7 @@ import CorpusProfile from './CorpusProfile';
 import TextAnalysis from './TextAnalysis';
 import Navigator from './Navigator';
 import QuestionView from './QuestionView';
+import ToolUseView from './ToolUseView';
 import {loadSpace} from './question';
 import SegmentedButtons from './SegmentedButtons';
 
@@ -30,8 +29,9 @@ const loadSpaceFor = async (name) => {
   return spaces.get(name);
 };
 
-// ask works on the synthetic geography corpus, whose pairs are built for it; other corpora aren't
-const ASK_CORPUS = 'geography';
+// ask works on the synthetic corpora built for it: questions over geography's word space, and a
+// tool-using agent over the share-prices chain; other corpora aren't structured for either
+const ASK_CORPORA = ['geography', 'share-prices'];
 
 // the table only models the most frequent contexts
 const TOP_WORDS = 500;
@@ -89,8 +89,9 @@ const views = {
   graph: (map) => <WordMap map={map} />,
   table: (rows) => <ChainTable rows={rows} />,
   analysis: (data) => <TextAnalysis {...data} />,
-  navigate: (marcus, {permissions}) => <Navigator key={marcus.order} marcus={marcus} permissions={permissions} />,
-  ask: (space) => <QuestionView space={space} loadSpaceFor={loadSpaceFor} />,
+  navigate: (marcus) => <Navigator key={marcus.order} marcus={marcus} />,
+  // share-prices has no space: its ask uses the chain as built now
+  ask: (space, {marcus}) => (space ? <QuestionView space={space} loadSpaceFor={loadSpaceFor} /> : <ToolUseView key={marcus?.order} marcus={marcus} />),
 };
 
 // analyse generated text with wink-nlp, loaded on first use (~1MB), one group per context length
@@ -101,32 +102,6 @@ async function analyseGenerated(paragraphs) {
     const texts = paragraphs.filter((p) => p.order === order).map((p) => p.text);
     return {order, paragraphs: texts.length, profile: analyse(texts.join('\n')).profile};
   });
-}
-
-// a generated paragraph, sentence by sentence: tool tokens go through the harness (its panel and
-// filled-in results are shown apart from the predicted words)
-function Paragraph({text, permissions}) {
-  const sentences = text.trim().split(/(?<=\.) /).map((s) => s.replace(/\.$/, '').split(' '));
-  return (
-    <>
-      {sentences.map((words, i) => (
-        <span key={i}>
-          {applyHarness(words, permissions).map((t, j) => {
-            return (
-              <span key={j}>
-                {j > 0 && ' '}
-                {t.kind === 'call' && <>{t.word} <HarnessCall call={t.call} /></>}
-                {t.kind === 'filled' && <span className="harness-filled" title="filled in by the harness">{t.word}</span>}
-                {t.kind === 'unfilled' && <span className="harness-unfilled" title="no tool call before it: the harness has nothing to fill it with">{t.word}</span>}
-                {t.kind === 'word' && t.word}
-              </span>
-            );
-          })}
-          {'. '}
-        </span>
-      ))}
-    </>
-  );
 }
 
 function Stat({label, value, note}) {
@@ -147,7 +122,6 @@ export default function App() {
   const [paragraphs, setParagraphs] = useState([]);
   const [view, setView] = useState(null); // null (generated text) | {type: a key of views, data} shown in the main pane
   const [profile, setProfile] = useState(null); // headline figures for the selected corpus
-  const [allowSell, setAllowSell] = useState(false); // harness permission for the (fake) sell tool
 
   const n = Number(order);
   const validOrder = Number.isInteger(n) && n >= 1 && n <= MAX_ORDER;
@@ -192,14 +166,14 @@ export default function App() {
       if (type === 'graph') data = (await load('profile', corpus)).map;
       if (type === 'table') data = marcus.topContexts(TOP_WORDS);
       if (type === 'navigate') data = marcus;
-      if (type === 'ask') data = await loadSpaceFor(corpus);
+      if (type === 'ask') data = corpus === 'geography' ? await loadSpaceFor(corpus) : null;
       if (type === 'analysis') data = {corpus: profile, generated: await analyseGenerated(paragraphs)};
       setView({type, data});
     });
   }
 
   function generate() {
-    setParagraphs([...paragraphs, {text: marcus.generate(), order: marcus.order, permissions: {allowSell}}]);
+    setParagraphs([...paragraphs, {text: marcus.generate(), order: marcus.order}]);
     setView(null); // show it
   }
 
@@ -223,7 +197,7 @@ export default function App() {
               {CORPORA.map((name) => <option key={name} value={name}>{name}</option>)}
             </select>
           </label>
-          <SegmentedButtons label="view corpus" options={corpus === ASK_CORPUS ? ['raw', 'clean', 'profile', 'ask'] : ['raw', 'clean', 'profile']} active={view?.type}
+          <SegmentedButtons label="view corpus" options={ASK_CORPORA.includes(corpus) ? ['raw', 'clean', 'profile', 'ask'] : ['raw', 'clean', 'profile']} active={view?.type}
             disabled={!corpus || !!busy} onSelect={toggle} />
         </section>
 
@@ -233,10 +207,6 @@ export default function App() {
             Context words (n)
             <input type="number" min="1" max={MAX_ORDER} step="1" value={order}
               onChange={chooseOrder} disabled={!!busy} aria-invalid={!validOrder} />
-          </label>
-          <label className="checkbox">
-            <input type="checkbox" checked={allowSell} onChange={(e) => setAllowSell(e.target.checked)} />
-            allow the sell tool (harness permission)
           </label>
           <button className={marcus ? '' : 'cta'} onClick={() => run('build', async () => setMarcus(buildMarkov(await load('clean', corpus), n)))}
             disabled={!corpus || !validOrder || !!busy}>
@@ -291,7 +261,7 @@ export default function App() {
                     <X aria-hidden="true" />
                   </button>
                 </div>
-                {views[view.type](view.data, {permissions: {allowSell}})}
+                {views[view.type](view.data, {marcus})}
               </section>
             ) : (
               <>
@@ -316,10 +286,9 @@ export default function App() {
                   </div>
                   <div id="console" className="card-content">
                     {paragraphs.length === 0 && <div className="empty">Nothing generated yet.</div>}
-                    {paragraphs.map(({text, order, permissions}, i) => (
+                    {paragraphs.map(({text, order}, i) => (
                       <p key={i}>
-                        <span className="badge">n={order}</span>{' '}
-                        <Paragraph text={text} permissions={permissions} />
+                        <span className="badge">n={order}</span> {text}
                       </p>
                     ))}
                   </div>

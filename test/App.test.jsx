@@ -539,46 +539,38 @@ describe('the harness (uses the synthetic share-prices corpus)', () => {
     await waitFor(() => expect(button('generate').disabled).toBe(false));
   }
 
-  test('navigate: a tool token is intercepted; sell is refused until permitted, then NUM is filled', async () => {
-    await buildShares(4);
-    openView('navigate');
-    const view = await findView('Navigate the chain');
-    fireEvent.change(screen.getByLabelText('starting words'), {target: {value: 'sell my tesco shares'}});
-    fireEvent.click(view.querySelector('.chip.phrase'));
-    fireEvent.click([...view.querySelectorAll('.chips-area .chip')].find((c) => c.textContent.startsWith('$sell-tsco')));
+  test('ask shows the fake api prices and asks for the chain to be built first', async () => {
+    render(<App />);
+    await selectCorpus('share-prices');
+    expect(parts('view corpus').map((b) => b.textContent)).toEqual(['raw', 'clean', 'profile', 'ask']);
+    expect(screen.queryByLabelText('allow the sell tool (harness permission)')).toBeNull();
+    openView('ask');
+    const view = await findView('Ask a question');
+    const prices = within(view).getByRole('table', {name: 'fake api prices'});
+    expect(within(prices).getByText('TSCO.L').closest('tr').textContent).toBe('TescoTSCO.L412.3p');
+    expect(view.textContent).toContain('Build the chain to ask it');
+  });
 
-    const panel = () => within(view).getByRole('note', {name: 'harness'});
-    expect(panel().textContent).toContain('token $sell-tsco → tool sell, argument tsco');
-    expect(panel().textContent).toContain('refused: the sell tool is not permitted');
-    fireEvent.click([...view.querySelectorAll('.chips-area .chip')].find((c) => c.textContent.startsWith('result')));
-    fireEvent.click([...view.querySelectorAll('.chips-area .chip')].find((c) => c.textContent.startsWith('NUM')));
-    const sentence = screen.getByLabelText('sentence so far');
-    expect(sentence.querySelector('.harness-filled').textContent).toBe('REFUSED');
-
-    fireEvent.click(screen.getByLabelText('allow the sell tool (harness permission)'));
-    expect(panel().textContent).toContain('pretended to sell tsco');
-    expect(sentence.querySelector('.harness-filled').textContent).toBe('101'); // the fake price, filled by the harness
+  test('ask at n=7: the chain calls the tool, the harness runs it, and the answer repeats its price', async () => {
+    await buildShares(7);
+    openView('ask');
+    const view = await findView('Ask a question');
+    fireEvent.click(within(view).getByRole('button', {name: 'ask'})); // "What's Tesco's share price today?"
+    const [call, answer] = view.querySelectorAll('.model-text');
+    expect(call.textContent).toBe('{"type":"tool_use","name":"get_share_price","input":{"ticker":"TSCO.L"}}');
+    expect(view.textContent).toContain('stop_reason: tool_use');
+    expect(view.querySelector('.prices tr.called').textContent).toContain('TSCO.L');
+    expect(view.textContent).toContain('looked up TSCO.L in the fake price table: 412.3p');
+    expect(answer.textContent).toMatch(/^assistant: Tesco .* 412\.3p (today|right now)\.$/);
+    expect(view.querySelector('.verdict.match').textContent).toMatch(/^The price matches the api \(412\.3p\)/);
   });
 
   test('navigate: typed words the chain has never seen are a plain dead end', async () => {
     await buildShares(2);
     openView('navigate');
     const view = await findView('Navigate the chain');
-    fireEvent.change(screen.getByLabelText('starting words'), {target: {value: 'tesco zzyzx'}});
+    fireEvent.change(screen.getByLabelText('starting words'), {target: {value: 'Tesco zzyzx'}});
     expect(view.querySelector('.dead-end').textContent).toMatch(/Dead end: “zzyzx” is not in this chain/);
     expect(view.querySelector('.chip.phrase')).toBeNull();
-  });
-
-  test('generate: tool tokens get harness panels and filled results, apart from the predicted words', async () => {
-    await buildShares(6);
-    fireEvent.click(button('generate'));
-    const paragraph = home().querySelector('p:last-child');
-    const panels = [...paragraph.querySelectorAll('[aria-label="harness"]')];
-    expect(panels.length).toBeGreaterThan(0);
-    for (const p of panels) expect(p.textContent).toMatch(/^harness \(code, not the chain\)token \$(price|sell)-/);
-    expect(paragraph.querySelector('.harness-filled')).not.toBeNull();
-    // every NUM is either filled by the harness or marked as having no call before it
-    const bare = [...paragraph.querySelectorAll('span')].filter((s) => s.textContent === 'NUM' && !s.querySelector('span'));
-    expect(bare.every((s) => s.className === 'harness-unfilled')).toBe(true);
   });
 });

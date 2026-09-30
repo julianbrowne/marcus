@@ -1,7 +1,5 @@
 import {useState} from 'react';
 import {RotateCcw, Undo2} from 'lucide-react';
-import HarnessCall from './HarnessCall';
-import {applyHarness} from './harness';
 
 const START_WORDS = 500; // sentence starters offered
 const MAX_OPTIONS = 60; // next words shown at once (the rest are summarised)
@@ -14,8 +12,7 @@ function resolve(marcus, text) {
 }
 
 // Walk the chain by hand: pick a start, then one of the words that followed the same context in the corpus.
-// permissions: what the harness may do when the chain emits a tool token ({allowSell})
-export default function Navigator({marcus, permissions = {allowSell: false}}) {
+export default function Navigator({marcus}) {
   const [path, setPath] = useState([]); // words chosen so far
   const [atStart, setAtStart] = useState(true); // did the path begin a sentence?
   const [ended, setEnded] = useState(false);
@@ -76,9 +73,6 @@ export default function Navigator({marcus, permissions = {allowSell: false}}) {
 
   const next = marcus.followers(path, atStart);
   const contextFrom = path.length - next.context.length; // words from here on are the context
-  // the harness reads the chain's words: tool tokens run, and NUM shows the latest result
-  const harnessed = applyHarness(path, permissions);
-  const calls = harnessed.filter((t) => t.kind === 'call');
   const shown = next.options.slice(0, MAX_OPTIONS);
   const rest = next.options.slice(MAX_OPTIONS);
   const restCount = rest.reduce((s, o) => s + o.count, 0);
@@ -89,20 +83,11 @@ export default function Navigator({marcus, permissions = {allowSell: false}}) {
         {path.map((w, i) => (
           <span key={i}>
             {i > 0 && ' '}
-            <span className={[i >= contextFrom && 'context', harnessed[i].kind === 'filled' && 'harness-filled', harnessed[i].kind === 'unfilled' && 'harness-unfilled'].filter(Boolean).join(' ') || undefined}
-              title={{filled: 'NUM, filled in by the harness', unfilled: 'no tool call before it: the harness has nothing to fill it with'}[harnessed[i].kind]}>
-              {harnessed[i].word}
-            </span>
+            <span className={i >= contextFrom ? 'context' : undefined}>{w}</span>
           </span>
         ))}
         {ended && <span className="stop">.</span>}
       </p>
-      {calls.length > 0 && (
-        <div className="harness-calls">
-          <p className="hint">The chain predicted a tool token; the harness (ordinary code) intercepted it:</p>
-          {calls.map((t, i) => <HarnessCall key={i} call={t.call} />)}
-        </div>
-      )}
       {next.backedOff > 0 && !ended && (
         <p className="hint">
           The corpus never had these {marcus.order} words in a row, so the chain backed off to the last {next.context.length}

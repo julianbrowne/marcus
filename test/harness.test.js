@@ -1,59 +1,53 @@
-import {applyHarness, isToolCall, parseToolCall, runTool} from '../src/harness';
-import {clean} from '../src/textprep';
+import {COMPANIES, converse, parseToolUse, runTool, tokenise, toolUse} from '../src/harness';
 import {Markov} from '../src/markov';
 import {shareCorpus} from '../scripts/make-share-prices.mjs';
 
-test('tool tokens are "$" then a letter, parsed into tool and argument', () => {
-  expect(parseToolCall('$price-tsco')).toEqual({tool: 'price', argument: 'tsco'});
-  expect(parseToolCall('$SELL-BP')).toEqual({tool: 'sell', argument: 'bp'});
-  expect(parseToolCall('$launch')).toEqual({tool: 'launch', argument: ''});
-  expect(isToolCall('$45')).toBe(false); // money, not a tool
-  expect(parseToolCall('price')).toBeNull();
-  expect(parseToolCall('sha$l')).toBeNull(); // a "$" inside a word (tiny-shakespeare has one)
+test('a tool call is a word in the agreed JSON format; anything else is not', () => {
+  expect(parseToolUse(toolUse('TSCO.L'))).toEqual({type: 'tool_use', name: 'get_share_price', input: {ticker: 'TSCO.L'}});
+  expect(parseToolUse('{"type":"tool_result","content":"1p"}')).toBeNull();
+  expect(parseToolUse('Tesco')).toBeNull();
+  expect(parseToolUse('{"type":')).toBeNull(); // half a call
 });
 
-test('the fake registry answers known calls and fails unknown ones', () => {
-  expect(runTool({tool: 'price', argument: 'tsco'})).toMatchObject({ok: true, result: '101'});
-  expect(runTool({tool: 'price', argument: 'xyz'})).toMatchObject({ok: false, result: 'ERROR'});
-  expect(runTool({tool: 'launch', argument: 'missiles'})).toMatchObject({ok: false, message: 'unknown tool "launch": nothing in the registry'});
+test('the fake api answers known tickers and fails unknown ones and unknown tools', () => {
+  expect(runTool({name: 'get_share_price', input: {ticker: 'TSCO.L'}})).toMatchObject({ok: true, content: '412.3p'});
+  expect(runTool({name: 'get_share_price', input: {ticker: 'XYZ.L'}})).toMatchObject({ok: false, content: 'unknown_ticker'});
+  expect(runTool({name: 'sell', input: {}})).toMatchObject({ok: false, content: 'unknown_tool'});
 });
 
-test('the sell tool is refused unless permitted', () => {
-  expect(runTool({tool: 'sell', argument: 'tsco'})).toMatchObject({ok: false, result: 'REFUSED'});
-  expect(runTool({tool: 'sell', argument: 'tsco'}, {allowSell: false}).message).toMatch(/^refused/);
-  expect(runTool({tool: 'sell', argument: 'tsco'}, {allowSell: true})).toMatchObject({ok: true, result: '101'});
-});
-
-test('the harness runs tool tokens and fills the NUMs after them', () => {
-  const out = applyHarness('NUM then $price-bp result NUM at NUM'.split(' '));
-  expect(out.map((t) => t.kind)).toEqual(['unfilled', 'word', 'call', 'word', 'filled', 'word', 'filled']);
-  expect(out.map((t) => t.word).join(' ')).toBe('NUM then $price-bp result 404 at 404'); // no call yet: NUM stays
-  expect(applyHarness(['$sell-bp', 'NUM'])[1].word).toBe('REFUSED');
+test('questions are tokenised as in training: split on spaces, sentence punctuation dropped', () => {
+  expect(tokenise("What's Tesco's share price today? ")).toEqual(["What's", "Tesco's", 'share', 'price', 'today']);
 });
 
 describe('the synthetic share-prices corpus', () => {
   const text = shareCorpus();
-
-  test('tool tokens survive cleaning and chain building', () => {
-    const cleaned = clean(text);
-    expect(cleaned.split('\n').sort()).toEqual(text.trim().split('\n').sort()); // cleaning changes nothing
-    expect(cleaned).toContain('$price-tsco');
-    const m = new Markov(cleaned);
-    m.setOrder(3);
+  const chain = (order) => {
+    const m = new Markov(text);
+    m.setOrder(order);
     m.buildChain();
-    expect(m.followers(['sell', 'my', 'tesco', 'shares']).options.map((o) => o.word)).toContain('$sell-tsco');
+    return m;
+  };
+
+  test('one transcript per line, and every price the fake api gives appears in training', () => {
+    const lines = text.trim().split('\n');
+    expect(lines).toHaveLength(COMPANIES.length * 60);
+    expect(lines.every((l) => /^tools: .* user: .* assistant: \{"type":"tool_use".* assistant: .*\.$/.test(l))).toBe(true);
+    expect(lines.some((l) => /[?!] /.test(l))).toBe(false); // the chain would split a line there
+    for (const [, , price] of COMPANIES) expect(text).toContain(`"content":"${price}"`);
   });
 
-  test('at low order the chain can call the wrong ticker; at high order it follows the company', () => {
-    const next = (order) => {
-      const m = new Markov(text);
-      m.setOrder(order);
-      m.buildChain();
-      return m.followers('what is the tesco share price'.split(' ')).options.map((o) => o.word);
-    };
-    const low = next(1); // sees only "price"
-    expect(low).toContain('$price-tsco');
-    expect(low.filter((w) => w.startsWith('$price-') && w !== '$price-tsco').length).toBeGreaterThanOrEqual(7);
-    expect(next(6)).toEqual(['$price-tsco']); // sees "what is the tesco share price"
+  test('with 7 context words the chain calls the right ticker and repeats the api price', () => {
+    for (const [company, ticker, price] of COMPANIES) {
+      const {call, result, second} = converse(chain(7), `What is the share price of ${company}`);
+      expect(call.input.ticker).toBe(ticker);
+      expect(result.content).toBe(price);
+      expect(second.out.map((o) => o.word)).toContain(price);
+      expect(second.stop).toBe('end_turn');
+    }
+  });
+
+  test('with 2 context words the chain sees only "today assistant:", so any ticker can follow', () => {
+    const {options} = chain(2).followers(['user:', ...tokenise("What's Tesco's share price today?"), 'assistant:']);
+    expect(options.map((o) => parseToolUse(o.word)?.input.ticker).filter(Boolean).length).toBeGreaterThan(1);
   });
 });

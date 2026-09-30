@@ -1050,77 +1050,75 @@ input[aria-invalid="true"] {
   fill: var(--pos-adjective);
 }
 
-/* ---------- harness: ordinary code, shown apart from the chain's predicted words ---------- */
+/* ---------- ask: a tool-using agent (share-prices) ---------- */
 
-.harness {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin: 6px 0;
-  padding: 8px 12px;
-  border: 1px dashed var(--foreground);
-  border-radius: calc(var(--radius) - 4px);
-  background: var(--muted);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-  line-height: 1.5;
+.tool-use .prices {
+  width: auto;
+  margin-bottom: 16px;
 }
 
-.harness.failed {
-  border-color: var(--tone-negative);
-}
-
-.harness-label {
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  font-size: 11px;
-}
-
-.harness.failed .harness-label {
-  color: var(--tone-negative);
-}
-
-.harness code {
-  font-weight: 600;
-}
-
-.harness-filled {
-  padding: 0 4px;
-  border: 1px dashed var(--foreground);
-  border-radius: 4px;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.9em;
-}
-
-.harness-unfilled {
-  padding: 0 4px;
-  border: 1px dashed var(--tone-negative);
-  border-radius: 4px;
-  color: var(--tone-negative);
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.9em;
-}
-
-.harness-calls {
-  margin-bottom: 12px;
-}
-
-.harness-calls .hint {
-  margin-bottom: 4px;
-}
-
-.checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.tool-use .prices caption {
+  caption-side: top;
+  text-align: left;
+  padding-bottom: 6px;
+  color: var(--muted-foreground);
   font-size: 13px;
 }
 
-.checkbox input {
-  width: auto;
-  height: auto;
-  box-shadow: none;
+.tool-use .prices tr.called {
+  background: color-mix(in oklch, var(--cta) 12%, transparent);
+}
+
+.ask-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ask-form .nav-input {
+  flex: 1;
+  margin: 0;
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.steps h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.steps pre.corpus {
+  margin: 0 0 6px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.model-text {
+  margin: 0 0 6px;
+  padding: 8px 12px;
+  border-radius: calc(var(--radius) - 4px);
+  background: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.verdict {
+  margin: 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--tone-positive);
+  background: var(--muted);
+  font-size: 13px;
+}
+
+.verdict.mismatch {
+  border-left-color: var(--tone-negative);
 }
 
 .dead-end {

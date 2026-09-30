@@ -1,34 +1,31 @@
-// A synthetic corpus for the harness demo: share-price questions, each followed by a tool token
-// ($price-<ticker>) and a continuation with NUM placeholders the harness fills in.
+// A synthetic corpus for the harness demo: agent transcripts, one per line, in the format the
+// harness (src/harness.js) uses. Each is one trading day: the tool list, a user's share-price
+// question, the assistant's tool call, the tool result and the assistant's answer.
 //
 //   node scripts/make-share-prices.mjs   (writes src/corpus/raw/share-prices.txt)
 //
-// Synthetic because no real text pairs questions with tool calls like this. Lines have no sentence
-// punctuation, so the cleaner keeps each question and its tool call in one sentence. Deterministic
-// (seeded shuffle), so it rebuilds identically.
+// Why it works for a chain: each line is one "sentence", so the whole exchange is one run of
+// context. The ticker is chosen a few words after the company is named, and the answer's price is
+// written 6 or 7 words after the tool result, so with enough context words (n) the chain sees
+// them. Each company's prices are a random walk ending at today's fake-api price, so today's price
+// (like every other) has been seen after its tool result. Questions have no "?" (the chain would
+// split the line there). Kept as written: prepare-corpora.mjs doesn't clean it (cleaning strips
+// the JSON). Deterministic (seeded), so it rebuilds identically.
 
 import {writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {COMPANIES, TOOLS_LINE, toolResult, toolUse} from '../src/harness.js';
 
-const COMPANIES = [
-  ['tesco', 'tsco'], ['sainsbury', 'sbry'], ['barclays', 'barc'], ['bp', 'bp'],
-  ['unilever', 'ulvr'], ['vodafone', 'vod'], ['lloyds', 'lloy'], ['shell', 'shel'],
-];
+const DAYS = 60; // transcripts per company
 
+// {c} company, {s} company's
 const QUESTIONS = [
-  'what is the {c} share price', 'whats the {c} share price today', 'how much are {c} shares worth',
-  'tell me the current price of {c} shares', 'give me the latest {c} stock price', 'check the price of {c} for me',
-  'how are {c} shares doing today', 'i would like to know the {c} share price', 'look up {c} on the stock market',
-  'what are {c} shares trading at', 'can you get me a quote for {c}', 'price check on {c} please',
+  "What's {s} share price today", 'What is the share price of {c}', 'How much are {c} shares worth today',
+  'Can you check the {c} share price for me', 'Give me the latest price for {c}', 'What are {c} shares trading at',
+  'Look up the share price for {c} please', 'How are {c} shares doing today', "What's the current price of {c} stock",
 ];
-const ANSWERS = [
-  'result NUM so {c} shares are trading at NUM pence',
-  'result NUM which means {c} is at NUM pence a share',
-  'result NUM so the price of {c} is NUM pence',
-];
-const SELLS = ['sell my {c} shares', 'please sell all my {c} shares now', 'get rid of my {c} shares', 'i want to sell my {c} holding'];
-const SOLD = 'result NUM so your {c} shares have been sold at NUM pence';
-const NOISY = 24; // lines whose tool call names the wrong company
+// {c} company, {t} ticker, {p} price
+const ANSWERS = ['{c} ({t}) is trading at {p} today.', '{c} ({t}) is at {p} right now.', '{c} shares are trading at {p} today.'];
 
 // mulberry32: a small seeded generator, so the corpus is the same every time
 function random(seed) {
@@ -42,17 +39,17 @@ function random(seed) {
 
 export function shareCorpus() {
   const rand = random(2026);
-  const fill = (template, name) => template.replaceAll('{c}', name);
+  const pick = (list) => list[Math.floor(rand() * list.length)];
   const lines = [];
-  for (const [name, ticker] of COMPANIES) {
-    for (const q of QUESTIONS) for (const a of ANSWERS) lines.push(`${fill(q, name)} $price-${ticker} ${fill(a, name)}`);
-    for (const s of SELLS) lines.push(`${fill(s, name)} $sell-${ticker} ${fill(SOLD, name)}`);
-  }
-  for (let i = 0; i < NOISY; i++) {
-    const [name] = COMPANIES[i % COMPANIES.length];
-    const [, wrong] = COMPANIES[(i % COMPANIES.length + 1 + Math.floor(rand() * (COMPANIES.length - 1))) % COMPANIES.length];
-    const q = QUESTIONS[Math.floor(rand() * QUESTIONS.length)];
-    lines.push(`${fill(q, name)} $price-${wrong} ${fill(ANSWERS[0], name)}`);
+  for (const [c, t, today] of COMPANIES) {
+    // walk back from today's price, up to 1.5% a day
+    const prices = [parseFloat(today)];
+    while (prices.length < DAYS) prices.unshift(prices[0] * (1 + (rand() - 0.5) * 0.03));
+    for (const price of prices) {
+      const p = `${price.toFixed(1)}p`;
+      const fill = (s) => s.replaceAll('{c}', c).replaceAll('{s}', `${c}'s`).replaceAll('{t}', t).replaceAll('{p}', p);
+      lines.push(`${TOOLS_LINE} user: ${fill(pick(QUESTIONS))} assistant: ${toolUse(t)} ${toolResult(p)} assistant: ${fill(pick(ANSWERS))}`);
+    }
   }
   for (let i = lines.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));
@@ -64,5 +61,5 @@ export function shareCorpus() {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const text = shareCorpus();
   writeFileSync(new URL('../src/corpus/raw/share-prices.txt', import.meta.url), text);
-  console.log(`wrote ${text.trim().split('\n').length} lines to src/corpus/raw/share-prices.txt`);
+  console.log(`wrote ${text.trim().split('\n').length} transcripts to src/corpus/raw/share-prices.txt`);
 }
