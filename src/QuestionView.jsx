@@ -159,11 +159,11 @@ export default function QuestionView({space, loadSpaceFor}) {
 
       {mode === 'question' && <>
         <p className="caption">
-          This is similarity retrieval over word co-occurrence, not how an LLM generates an answer.
+          Similarity retrieval over word co-occurrence
         </p>
 
         <section>
-          <input type="search" className="nav-input" aria-label="ask a question" placeholder="ask a question, e.g. what is the capital of france"
+          <input type="search" className="nav-input" aria-label="ask a question" placeholder="ask a question"
             value={question} onChange={(e) => setQuestion(e.target.value)} />
           {q && (
             <p className="hint">
