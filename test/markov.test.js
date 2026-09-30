@@ -140,14 +140,3 @@ test('backoff moves past a context the corpus never saw, including unknown words
   // once the sentence fills the window, the instruction has no effect
   expect(m.followers(['make', 'no', 'mistakes', 'the', 'cat'])).toEqual(m.followers(['the', 'cat']));
 });
-
-test('generate with an instruction seeds each sentence but does not output it', () => {
-  const m = build('make no mistakes\nno mistakes here\nthe cat sat\nthe dog ran', 2, 2);
-  m.setMinSentences(20);
-  const sentences = m.generate(['make', 'no', 'mistakes']).split('. ').filter(Boolean);
-  expect(sentences.length).toBe(20);
-  for (const s of sentences) expect(s.toLowerCase()).not.toMatch(/^make no mistakes/); // instruction isn't output
-  // after "no mistakes" the corpus continued with "here" or ended, so seeded sentences start with "here"
-  expect(sentences.some((s) => s.startsWith('Here'))).toBe(true);
-  expect(m.generate(['zzz', 'qqq']).length).toBeGreaterThan(0); // unknown instruction: falls back to a sentence start
-});

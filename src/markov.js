@@ -105,17 +105,12 @@ export class Markov {
   /**
    * The longest tail of a context the corpus has seen, and its block: standard n-gram
    * backoff, dropping the oldest word until the rest has been seen. Unknown words are
-   * never seen, so backoff moves past them. With `restart`, if even the last word was
-   * never seen, fall back to a sentence start.
+   * never seen, so backoff moves past them.
   **/
-  seenBlock(context, restart = false) {
+  seenBlock(context) {
     let b = this.block(context);
     while (b.end <= b.start && context.length > 1) {
       context = context.slice(1);
-      b = this.block(context);
-    }
-    if (b.end <= b.start && restart) {
-      context = [BOUNDARY];
       b = this.block(context);
     }
     return {...b, context};
@@ -148,12 +143,10 @@ export class Markov {
     return end > start ? (endsUntil - start) / (end - start) : 0;
   }
 
-  // instruction: words that come before every sentence, seeding its context (not part of the output)
-  generate(instruction = []) {
-    const prefix = this.idsOf(instruction);
+  generate() {
     let paragraph = '';
     for (let i = 0; i < this.minSentences; i++) {
-      const s = this.sentence(prefix).trim(); // trim before capitalising, or "I grieve" becomes "Igrieve"
+      const s = this.sentence().trim(); // trim before capitalising, or "I grieve" becomes "Igrieve"
       if (s !== '') paragraph += s.charAt(0).toUpperCase() + s.slice(1) + '. ';
     }
     return paragraph;
@@ -167,33 +160,31 @@ export class Markov {
    * that only ever ends sentences) or never pass a plausible ending are
    * retried; if all fail, a short but properly ended one is preferred.
   **/
-  sentence(prefix = []) {
+  sentence() {
     let fallback;
     let attempt;
     for (let i = 0; i < 10; i++) {
-      attempt = this.attemptSentence(prefix);
+      attempt = this.attemptSentence();
       if (attempt.ended && attempt.longEnough) return attempt.text;
       if (attempt.ended) fallback ??= attempt;
     }
     return (fallback ?? attempt).text; // ponytail: 10 tries; only odd corpora get here
   }
 
-  // prefix: token ids before the sentence (an instruction); they seed the context but aren't output
-  attemptSentence(prefix = []) {
+  attemptSentence() {
     const maxWords = this.minWordsInSentence * 3;
-    const ids = [...prefix];
-    const own = () => ids.length - prefix.length; // words generated so far
+    const ids = [];
     let best = {length: 0, chance: 0}; // most likely ending at or past the minimum length
     let bestShort = {length: 0, chance: 0}; // ...and before it
-    const text = () => ids.slice(prefix.length).map((id) => this.words[id]).join(' ');
-    const result = (ended) => ({text: text(), ended, longEnough: own() >= this.minWordsInSentence});
+    const text = () => ids.map((id) => this.words[id]).join(' ');
+    const result = (ended) => ({text: text(), ended, longEnough: ids.length >= this.minWordsInSentence});
 
     while (true) {
-      // with an instruction the context may be one the corpus never saw: back off
-      const {start, endsUntil, end, context} = this.seenBlock(this.contextFor(ids), true);
-      const longEnough = own() >= this.minWordsInSentence;
+      const context = this.contextFor(ids);
+      const {start, endsUntil, end} = this.block(context);
+      const longEnough = ids.length >= this.minWordsInSentence;
       const chance = (endsUntil - start) / (end - start);
-      if (own() > 0) {
+      if (ids.length > 0) {
         if (longEnough && chance > best.chance) best = {length: ids.length, chance};
         if (!longEnough && chance > bestShort.chance) bestShort = {length: ids.length, chance};
       }
@@ -202,8 +193,8 @@ export class Markov {
       const from = longEnough || endsUntil === end ? start : endsUntil;
       const next = this.tokens[this.suffixes[from + Math.floor(Math.random() * (end - from))] + context.length];
 
-      if (next === BOUNDARY) return result(own() > 0);
-      if (own() >= maxWords) {
+      if (next === BOUNDARY) return result(ids.length > 0);
+      if (ids.length >= maxWords) {
         const cut = best.chance > 0 ? best : bestShort;
         if (cut.chance > 0) ids.length = cut.length;
         return result(cut.chance > 0);

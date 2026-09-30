@@ -1015,34 +1015,7 @@ input[aria-invalid="true"] {
   }
 }
 
-/* ---------- instructions ---------- */
-
-.instruction {
-  color: var(--muted-foreground);
-  font-style: italic;
-}
-
-.in-window {
-  text-decoration: underline;
-  text-decoration-color: var(--cta);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-}
-
-.window-status {
-  margin: 0 0 12px;
-  padding: 6px 10px;
-  border-radius: calc(var(--radius) - 4px);
-  font-size: 13px;
-}
-
-.window-status.different {
-  background: color-mix(in oklch, var(--cta) 12%, transparent);
-}
-
-.window-status.same {
-  background: var(--muted);
-}
+/* ---------- ask: instruction mode ---------- */
 
 .instruction-grid {
   display: grid;

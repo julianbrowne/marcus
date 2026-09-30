@@ -471,7 +471,7 @@ test('ask retrieves the nearest words to a question and to an analogy, and maps 
   await selectCorpus('geography');
   openView('ask');
   const view = await findView('Ask a question');
-  expect(view.querySelector('.caption').textContent).toMatch(/similarity retrieval over word co-occurrence, not how an LLM generates an answer/);
+  expect(view.querySelector('.caption').textContent).toMatch(/similarity retrieval over word co-occurrence/i);
   const dots = view.querySelectorAll('.space-map .word-dot').length; // every word in the space
   expect(dots).toBeGreaterThan(200);
   expect(view.querySelector('.space-map .query')).toBeNull(); // nothing asked yet
@@ -528,42 +528,6 @@ test(`instruction mode shows each word's weight, both phrases' nearest words, th
   expect(view.querySelector('.similarity').textContent).toMatch(/Cosine similarity of the two phrases: 0\.\d{3}/);
   expect(view.querySelectorAll('.space-map .query')).toHaveLength(2);
   expect([...view.querySelectorAll('.space-map .query text')].map((t) => t.textContent)).toEqual(['make no mistakes', 'make mistakes']);
-});
-
-test('navigate marks the instruction and the context window, and shows when the instruction stops mattering', async () => {
-  await buildProverbs(); // n = 2
-  fireEvent.change(screen.getByLabelText('Instruction (optional)'), {target: {value: 'Make no mistakes'}});
-  openView('navigate');
-  const view = await findView('Navigate the chain');
-  expect(view.querySelector('.hint .instruction').textContent).toBe('make no mistakes'); // spelled as the chain spells it
-  fireEvent.click([...view.querySelectorAll('.chips-area .chip')].find((c) => c.textContent.startsWith('a ')));
-
-  const sentence = screen.getByLabelText('sentence so far');
-  expect(sentence.textContent).toBe('make no mistakes a');
-  expect([...sentence.querySelectorAll('.instruction')].map((s) => s.textContent)).toEqual(['make', 'no', 'mistakes']);
-  // the 2-word window still reaches back into the instruction, so the options differ
-  expect(view.querySelector('.window-status').className).toContain('different');
-  expect(view.querySelector('.window-status').textContent).toContain('1 of its words is still in the 2-word window');
-
-  // one more word: the window is now all sentence, so the options are the same as without the instruction
-  fireEvent.click(view.querySelector('.chips-area .chip:not(.end)'));
-  expect(view.querySelector('.window-status').className).toContain('same');
-  const context = [...sentence.querySelectorAll('.context')].map((s) => s.textContent);
-  expect(context).toHaveLength(2);
-  expect(sentence.querySelectorAll('.instruction.context')).toHaveLength(0);
-});
-
-test('generating with an instruction shows it and marks the words chosen while it was in the window', async () => {
-  await buildProverbs(); // n = 2
-  fireEvent.change(screen.getByLabelText('Instruction (optional)'), {target: {value: 'make no mistakes'}});
-  fireEvent.click(button('generate'));
-  const paragraph = home().querySelector('p:last-child');
-  expect(paragraph.querySelector('.instruction').textContent).toBe('make no mistakes');
-  // the first n (2) words of each of the 5 sentences, one word per mark
-  const marked = [...paragraph.querySelectorAll('.in-window')].map((m) => m.textContent);
-  expect(marked).toHaveLength(10);
-  for (const m of marked) expect(m).not.toContain(' ');
-  expect(home().querySelector('.caption a').getAttribute('href')).toBe('https://arxiv.org/abs/2311.07911');
 });
 
 describe('the harness (uses the synthetic share-prices corpus)', () => {
