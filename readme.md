@@ -31,8 +31,6 @@ In the app, **ask** (next to raw, clean and profile) takes a question such as "w
 
 **ask > instruction** (select the geography corpus, then ask) shows why "make no mistakes" is not a directive: each word's weight in the averaged vector, the nearest words, and the cosine similarity with a comparison phrase ("make mistakes": 0.959 on the 67 books), with both points on the map. It uses the gutenberg-67-books space, which keeps 8,000 words so that mistakes, error and correct are included. In the navigator, if the corpus never saw a context, the chain backs off to its longest seen tail.
 
-**ask with a tool** (select the synthetic `share-prices` corpus and build the chain, then ask) shows that an agent's actions are ordinary code reacting to predicted words. A harness (`src/harness.js`) sends the chain a prompt: the tool list (`get_share_price`) and a question such as "What's Tesco's share price today?". The chain writes a tool call in the agreed JSON format, `{"type":"tool_use",...,"input":{"ticker":"TSCO.L"}}`, and stops (`stop_reason: tool_use`). The harness runs the call against a fake price table shown on screen, appends `{"type":"tool_result","content":"412.3p"}` and calls the chain again for the answer ("Tesco (TSCO.L) is trading at 412.3p today."), which can be checked against the table. The chain only sees its last n words: with 4 or fewer it often calls the wrong ticker; with 6 it gets the ticker right but writes a price from another day in training; with 7 or more the tool result is still in its window and the answer matches the api. It can only repeat a price it has seen after the same words, and it can't copy one it hasn't.
-
 In the app, **navigate** (next to graph and table) walks the chain by hand: pick a sentence starter, or type words to start mid-sentence, then pick each next word from those that followed the same context in the corpus, with the context words highlighted, until the sentence ends.
 
 In the app, **analyse** (in the Generated text card) loads wink-nlp on demand and measures the generated text the same way, one column per context length, beside the corpus's own figures.
@@ -59,10 +57,7 @@ General-purpose texts for testing clustering (sources and licences in [SOURCES.m
 
 `gutenberg-67-books.txt` - ~50 MB: 67 popular public domain books from Project Gutenberg in one file (Moby Dick is the first), for trying a really big corpus. Recreate or resize with `node scripts/fetch-gutenberg.mjs [count]` (writes `src/corpus/raw/gutenberg-67-books.txt`; it waits 2s between downloads, per Gutenberg's robot policy)
 
-`share-prices.txt` - **synthetic** (see `scripts/make-share-prices.mjs`): 480 agent transcripts, one per line, each a trading day for one of 8 companies: tool list, question, tool call, tool result and answer, in the format the harness uses. Kept as written (not cleaned, which would strip the JSON). Made up because no public text has tool-use transcripts like this; prices are fake.
-
 `tinystories.txt` - ~3 MB of simple-vocabulary children's stories (CDLA-Sharing-1.0)
-
 
 ## Tests
 

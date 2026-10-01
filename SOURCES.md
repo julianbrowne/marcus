@@ -16,7 +16,6 @@ Files in `src/corpus/raw/` are kept as downloaded (apart from trimming) and clea
 | `gutenberg-67-books.txt` | 67 books from the Project Gutenberg "Top 100 EBooks last 30 days" list (September 2026), downloaded by `scripts/fetch-gutenberg.mjs`, which lists each book | Public domain (US and UK: every author/translator died by 1955) |
 | `moby-dick.txt` | *Moby Dick; Or, The Whale*, Herman Melville, [Project Gutenberg #2701](https://www.gutenberg.org/ebooks/2701) | Public domain (US) |
 | `pride-and-prejudice.txt` | *Pride and Prejudice*, Jane Austen, [Project Gutenberg #1342](https://www.gutenberg.org/ebooks/1342) | Public domain (US) |
-| `share-prices.txt` | **Synthetic**, written by `scripts/make-share-prices.mjs` (seeded, reproducible): 480 agent transcripts, one per line, in the format the harness (`src/harness.js`) uses: a tool list, a share-price question about one of 8 FTSE companies, a `tool_use` call, a `tool_result` and the answer. Each company's prices are a random walk ending at the fake api's price. Synthetic because no public text has tool-use transcripts like this. Prices are fake | Part of this project (CC BY-NC 4.0) |
 | `sherlock-holmes.txt` | *The Adventures of Sherlock Holmes*, Arthur Conan Doyle, [Project Gutenberg #1661](https://www.gutenberg.org/ebooks/1661) | Public domain (US) |
 | `tinystories.txt` | First ~3 MB (3,934 whole stories) of `TinyStoriesV2-GPT4-valid.txt` from [TinyStories](https://huggingface.co/datasets/roneneldan/TinyStories), Eldan & Li, 2023 | [CDLA-Sharing-1.0](https://cdla.dev/sharing-1-0/) |
 

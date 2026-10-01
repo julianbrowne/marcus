@@ -7,7 +7,6 @@ import CorpusProfile from './CorpusProfile';
 import TextAnalysis from './TextAnalysis';
 import Navigator from './Navigator';
 import QuestionView from './QuestionView';
-import ToolUseView from './ToolUseView';
 import {loadSpace} from './question';
 import SegmentedButtons from './SegmentedButtons';
 
@@ -29,9 +28,8 @@ const loadSpaceFor = async (name) => {
   return spaces.get(name);
 };
 
-// ask works on the synthetic corpora built for it: questions over geography's word space, and a
-// tool-using agent over the share-prices chain; other corpora aren't structured for either
-const ASK_CORPORA = ['geography', 'share-prices'];
+// ask works on the synthetic geography corpus, whose pairs are built for it; other corpora aren't
+const ASK_CORPUS = 'geography';
 
 // the table only models the most frequent contexts
 const TOP_WORDS = 500;
@@ -90,8 +88,7 @@ const views = {
   table: (rows) => <ChainTable rows={rows} />,
   analysis: (data) => <TextAnalysis {...data} />,
   navigate: (marcus) => <Navigator key={marcus.order} marcus={marcus} />,
-  // share-prices has no space: its ask uses the chain as built now
-  ask: (space, {marcus}) => (space ? <QuestionView space={space} loadSpaceFor={loadSpaceFor} /> : <ToolUseView key={marcus?.order} marcus={marcus} />),
+  ask: (space) => <QuestionView space={space} loadSpaceFor={loadSpaceFor} />,
 };
 
 // analyse generated text with wink-nlp, loaded on first use (~1MB), one group per context length
@@ -166,7 +163,7 @@ export default function App() {
       if (type === 'graph') data = (await load('profile', corpus)).map;
       if (type === 'table') data = marcus.topContexts(TOP_WORDS);
       if (type === 'navigate') data = marcus;
-      if (type === 'ask') data = corpus === 'geography' ? await loadSpaceFor(corpus) : null;
+      if (type === 'ask') data = await loadSpaceFor(corpus);
       if (type === 'analysis') data = {corpus: profile, generated: await analyseGenerated(paragraphs)};
       setView({type, data});
     });
@@ -197,7 +194,7 @@ export default function App() {
               {CORPORA.map((name) => <option key={name} value={name}>{name}</option>)}
             </select>
           </label>
-          <SegmentedButtons label="view corpus" options={ASK_CORPORA.includes(corpus) ? ['raw', 'clean', 'profile', 'ask'] : ['raw', 'clean', 'profile']} active={view?.type}
+          <SegmentedButtons label="view corpus" options={corpus === ASK_CORPUS ? ['raw', 'clean', 'profile', 'ask'] : ['raw', 'clean', 'profile']} active={view?.type}
             disabled={!corpus || !!busy} onSelect={toggle} />
         </section>
 
@@ -261,7 +258,7 @@ export default function App() {
                     <X aria-hidden="true" />
                   </button>
                 </div>
-                {views[view.type](view.data, {marcus})}
+                {views[view.type](view.data)}
               </section>
             ) : (
               <>

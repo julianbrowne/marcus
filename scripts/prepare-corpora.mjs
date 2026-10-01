@@ -20,8 +20,6 @@ import {analyse, neighbourAgreement, distinctiveWords} from '../src/analyse.js';
 import {SPACES as SPACE_SETTINGS} from './space-settings.mjs';
 
 const MAP_WORDS = 500; // words on the word map
-// already one clean line per sentence, kept as written: agent transcripts whose JSON cleaning would strip
-const AS_IS = new Set(['share-prices']);
 // word spaces (+/-4 word window: groups paris with france), only for the corpora that use them.
 // Building one takes 1-2s (26s for the 67 books), so it's done here, not in the browser
 const dir = (name) => new URL(`../src/corpus/${name}/`, import.meta.url);
@@ -65,7 +63,7 @@ for (const file of readdirSync(RAW).filter((f) => f.endsWith('.txt')).sort()) {
 
   const started = performance.now();
   const text = readFileSync(raw, 'utf8');
-  const cleaned = AS_IS.has(name) ? text.trim() : clean(text);
+  const cleaned = clean(text);
   writeFileSync(cleanOut, cleaned);
 
   const prepared = prepare(text);
